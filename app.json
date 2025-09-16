@@ -24,6 +24,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "JsEngine": "jsc",
+    "plugins": [
+      "expo-maps"
+    ],
+    "permissions": [
+      "camera",
+      "mediaLibrary"
+    ]
   }
 }
