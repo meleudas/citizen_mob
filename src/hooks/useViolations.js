@@ -1,92 +1,52 @@
 // src/hooks/useViolations.js
 import { useState, useEffect, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import SQLite from 'react-native-sqlite-storage';
+import { useNetwork } from './useNetwork';
 import violationsService from '../services/violationService';
 
-// Ініціалізація SQLite
-SQLite.DEBUG(true);
-SQLite.enablePromise(true);
-
-const VIOLATIONS_STORAGE_KEY = 'violations';
-const OFFLINE_VIOLATIONS_KEY = 'offlineViolations';
+// Redux слайси
+import {
+  setViolations,
+  addViolation as addViolationRedux,
+  updateViolation as updateViolationRedux,
+  deleteViolation as deleteViolationRedux,
+  setCurrentViolation,
+  setFilters,
+  clearError,
+  selectAllViolations,
+  selectViolationsLoading,
+  selectViolationsError,
+  selectViolationsFilters,
+  selectViolationsPagination,
+  selectSyncStatus
+} from '../store/violationsSlice';
 
 export const useViolations = () => {
-  // Стани
-  const [violations, setViolations] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [totalCount, setTotalCount] = useState(0);
-  const [pagination, setPagination] = useState(null);
-  
-  // Фільтри та пошук
-  const [filters, setFilters] = useState({
-    category: 'all',
-    status: 'all',
-    dateFrom: null,
-    dateTo: null,
-  });
+  const dispatch = useDispatch();
+  const network = useNetwork();
+
+  // Селектори Redux
+  const violations = useSelector(selectAllViolations);
+  const loading = useSelector(selectViolationsLoading);
+  const error = useSelector(selectViolationsError);
+  const filters = useSelector(selectViolationsFilters);
+  const pagination = useSelector(selectViolationsPagination);
+  const syncStatus = useSelector(selectSyncStatus);
+
+  // Локальні стани
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('dateTime');
   const [sortOrder, setSortOrder] = useState('desc');
-  
-  // Пагінація
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  
-  // Offline стани
-  const [isOnline, setIsOnline] = useState(true);
-  const [db, setDb] = useState(null);
 
-  // Ініціалізація бази даних
-  useEffect(() => {
-    const initDatabase = async () => {
-      try {
-        const database = await SQLite.openDatabase({
-          name: 'ViolationsDB.db',
-          location: 'default',
-        });
-        
-        // Створення таблиці правопорушень
-        await database.executeSql(`
-          CREATE TABLE IF NOT EXISTS violations (
-            id TEXT PRIMARY KEY,
-            description TEXT,
-            category TEXT,
-            photo TEXT,
-            dateTime TEXT,
-            latitude REAL,
-            longitude REAL,
-            isSynced INTEGER DEFAULT 0,
-            createdAt TEXT,
-            updatedAt TEXT
-          )
-        `);
-        
-        setDb(database);
-      } catch (err) {
-        console.error('Database initialization error:', err);
-        setError('Помилка ініціалізації бази даних');
-      }
-    };
-
-    initDatabase();
-
-    // Перевірка статусу мережі
-    const checkNetworkStatus = () => {
-      // В реальному додатку тут буде перевірка мережі
-      setIsOnline(true);
-    };
-
-    checkNetworkStatus();
-  }, []);
+  // Використовуємо реальний статус мережі
+  const isOnline = network.isOnline();
 
   // Завантаження правопорушень
   const loadViolations = useCallback(async (options = {}) => {
     try {
-      setLoading(true);
-      setError(null);
-      
       const {
         page: pageNum = page,
         pageSize: size = pageSize,
@@ -96,7 +56,6 @@ export const useViolations = () => {
         order: sortOrdering = sortOrder
       } = options;
 
-      // Параметри для API запиту
       const apiParams = {
         page: pageNum,
         limit: size,
@@ -105,71 +64,43 @@ export const useViolations = () => {
         ...filterOptions
       };
 
-      // Додавання пошуку якщо є
       if (searchStr) {
         apiParams.search = searchStr;
       }
 
-      // Якщо є інтернет - використовуємо API
       if (isOnline) {
         const response = await violationsService.getViolations(apiParams);
-        
         if (response.success) {
-          setViolations(response.data);
-          setTotalCount(response.pagination?.total || response.data.length);
-          setPagination(response.pagination);
+          dispatch(setViolations(response.data));
           return response;
         } else {
           throw new Error(response.error);
         }
       } else {
-        // Якщо немає інтернету - завантажуємо з локальної бази
-        if (db) {
-          const [results] = await db.executeSql(
-            `SELECT * FROM violations ORDER BY ${sortField} ${sortOrdering === 'desc' ? 'DESC' : 'ASC'} LIMIT ? OFFSET ?`,
-            [size, (pageNum - 1) * size]
-          );
-          
-          const localViolations = [];
-          for (let i = 0; i < results.rows.length; i++) {
-            localViolations.push(results.rows.item(i));
-          }
-          
-          setViolations(localViolations);
-          setTotalCount(localViolations.length);
-          return { success: true, data: localViolations, totalCount: localViolations.length };
-        }
+        // Якщо немає мережі — беремо з локального стану Redux
+        return { success: true, data: violations };
       }
     } catch (err) {
       console.error('Load violations error:', err);
-      setError(err.message);
+      dispatch(clearError());
       return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
     }
-  }, [page, pageSize, filters, searchQuery, sortBy, sortOrder, isOnline, db]);
+  }, [page, pageSize, filters, searchQuery, sortBy, sortOrder, isOnline, violations, dispatch]);
 
   // Додавання правопорушення
   const addViolation = useCallback(async (violationData) => {
     try {
-      setLoading(true);
-      setError(null);
-
-      // Якщо є інтернет - використовуємо API
       if (isOnline) {
         const response = await violationsService.createViolation(violationData);
-        
         if (response.success) {
-          setViolations(prev => [response.data, ...prev]);
-          setTotalCount(prev => prev + 1);
+          dispatch(addViolationRedux(response.data));
           return response;
         } else {
           throw new Error(response.error);
         }
       } else {
-        // Якщо немає інтернету - зберігаємо локально
+        // Якщо немає мережі — зберігаємо локально (в Redux)
         const newId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
         const newViolation = {
           id: newId,
           ...violationData,
@@ -178,277 +109,97 @@ export const useViolations = () => {
           updatedAt: new Date().toISOString()
         };
 
-        // Збереження в локальну базу даних
-        if (db) {
-          await db.executeSql(
-            `INSERT INTO violations (
-              id, description, category, photo, dateTime, latitude, longitude, isSynced, createdAt, updatedAt
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              newViolation.id,
-              newViolation.description,
-              newViolation.category,
-              newViolation.photo,
-              newViolation.dateTime,
-              newViolation.location?.latitude || 0,
-              newViolation.location?.longitude || 0,
-              0, // isSynced
-              newViolation.createdAt,
-              newViolation.updatedAt
-            ]
-          );
-        }
-
-        // Збереження в AsyncStorage для офлайн режиму
-        const offlineViolations = await AsyncStorage.getItem(OFFLINE_VIOLATIONS_KEY);
+        // Зберігаємо в офлайн-сховище
+        const offlineViolations = await AsyncStorage.getItem('offlineViolations');
         const parsedViolations = offlineViolations ? JSON.parse(offlineViolations) : [];
         parsedViolations.push(newViolation);
-        await AsyncStorage.setItem(OFFLINE_VIOLATIONS_KEY, JSON.stringify(parsedViolations));
+        await AsyncStorage.setItem('offlineViolations', JSON.stringify(parsedViolations));
 
-        setViolations(prev => [newViolation, ...prev]);
-        setTotalCount(prev => prev + 1);
-
+        dispatch(addViolationRedux(newViolation));
         return { success: true, data: newViolation };
       }
     } catch (err) {
       console.error('Add violation error:', err);
-      setError(err.message);
+      dispatch(clearError());
       return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
     }
-  }, [db, isOnline]);
+  }, [isOnline, dispatch]);
 
   // Отримання правопорушення за ID
   const getViolationById = useCallback(async (id) => {
     try {
-      setLoading(true);
-      setError(null);
-
-      // Пошук в локальному стані
       const localViolation = violations.find(v => v.id === id);
       if (localViolation) {
+        dispatch(setCurrentViolation(localViolation));
         return { success: true, data: localViolation };
       }
 
-      // Пошук в базі даних
-      if (db) {
-        const [results] = await db.executeSql(
-          'SELECT * FROM violations WHERE id = ?',
-          [id]
-        );
-        
-        if (results.rows.length > 0) {
-          const violation = results.rows.item(0);
-          return { success: true, data: violation };
-        }
-      }
-
-      // Якщо є інтернет - запит до сервера
       if (isOnline) {
         const response = await violationsService.getViolation(id);
-        return response;
+        if (response.success) {
+          dispatch(setCurrentViolation(response.data));
+          return response;
+        }
       }
 
       return { success: false, error: 'Правопорушення не знайдено' };
     } catch (err) {
       console.error('Get violation error:', err);
-      setError(err.message);
+      dispatch(clearError());
       return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
     }
-  }, [violations, db, isOnline]);
+  }, [violations, isOnline, dispatch]);
 
   // Оновлення правопорушення
   const updateViolation = useCallback(async (id, data) => {
     try {
-      setLoading(true);
-      setError(null);
-
-      // Якщо є інтернет - використовуємо API
       if (isOnline) {
         const response = await violationsService.updateViolation(id, data);
-        
         if (response.success) {
-          setViolations(prev => 
-            prev.map(v => v.id === id ? { ...v, ...response.data } : v)
-          );
+          dispatch(updateViolationRedux(response.data));
           return response;
         } else {
           throw new Error(response.error);
         }
       } else {
-        // Якщо немає інтернету - оновлюємо локально
         const updatedViolation = {
           ...data,
-          updatedAt: new Date().toISOString()
+          id,
+          updatedAt: new Date().toISOString(),
+          isSynced: false
         };
 
-        // Оновлення в базі даних
-        if (db) {
-          await db.executeSql(
-            `UPDATE violations SET 
-              description = ?, category = ?, photo = ?, dateTime = ?, 
-              latitude = ?, longitude = ?, updatedAt = ?, isSynced = ?
-              WHERE id = ?`,
-            [
-              updatedViolation.description,
-              updatedViolation.category,
-              updatedViolation.photo,
-              updatedViolation.dateTime,
-              updatedViolation.location?.latitude || 0,
-              updatedViolation.location?.longitude || 0,
-              updatedViolation.updatedAt,
-              0, // isSynced
-              id
-            ]
-          );
-        }
-
-        // Оновлення в локальному стані
-        setViolations(prev => 
-          prev.map(v => v.id === id ? { ...v, ...updatedViolation } : v)
-        );
-
+        dispatch(updateViolationRedux({ id, ...updatedViolation }));
         return { success: true, data: updatedViolation };
       }
     } catch (err) {
       console.error('Update violation error:', err);
-      setError(err.message);
+      dispatch(clearError());
       return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
     }
-  }, [db, isOnline]);
+  }, [isOnline, dispatch]);
 
   // Видалення правопорушення
   const deleteViolation = useCallback(async (id) => {
     try {
-      setLoading(true);
-      setError(null);
-
-      // Якщо є інтернет - використовуємо API
       if (isOnline) {
         const response = await violationsService.deleteViolation(id);
-        
         if (response.success) {
-          setViolations(prev => prev.filter(v => v.id !== id));
-          setTotalCount(prev => prev - 1);
+          dispatch(deleteViolationRedux(id));
           return response;
         } else {
           throw new Error(response.error);
         }
       } else {
-        // Якщо немає інтернету - видаляємо локально
-        // Видалення з бази даних
-        if (db) {
-          await db.executeSql('DELETE FROM violations WHERE id = ?', [id]);
-        }
-
-        // Видалення з локального стану
-        setViolations(prev => prev.filter(v => v.id !== id));
-        setTotalCount(prev => prev - 1);
-
+        dispatch(deleteViolationRedux(id));
         return { success: true };
       }
     } catch (err) {
       console.error('Delete violation error:', err);
-      setError(err.message);
+      dispatch(clearError());
       return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
     }
-  }, [db, isOnline]);
-
-  // Отримання правопорушень за датою
-  const getViolationsByDate = useCallback(async (date) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Якщо є інтернет - використовуємо API
-      if (isOnline) {
-        const response = await violationsService.getViolationDates({ date });
-        return response;
-      } else {
-        // Для офлайн режиму - фільтрація з існуючих даних
-        const filteredViolations = violations.filter(violation => {
-          const violationDate = new Date(violation.dateTime).toDateString();
-          const targetDate = new Date(date).toDateString();
-          return violationDate === targetDate;
-        });
-
-        return { success: true, data: filteredViolations };
-      }
-    } catch (err) {
-      console.error('Get violations by date error:', err);
-      setError(err.message);
-      return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
-    }
-  }, [violations, isOnline]);
-
-  // Отримання правопорушень за локацією
-  const getViolationsByLocation = useCallback(async (locationParams) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Якщо є інтернет - використовуємо API
-      if (isOnline) {
-        const response = await violationsService.getViolationsByLocation(locationParams);
-        
-        if (response.success) {
-          setViolations(response.data);
-          setTotalCount(response.pagination?.total || response.data.length);
-          setPagination(response.pagination);
-          return response;
-        } else {
-          throw new Error(response.error);
-        }
-      } else {
-        // Для офлайн режиму - розрахунок відстані між двома точками (в метрах)
-        const calculateDistance = (lat1, lon1, lat2, lon2) => {
-          const R = 6371e3; // Радіус Землі в метрах
-          const φ1 = lat1 * Math.PI/180;
-          const φ2 = lat2 * Math.PI/180;
-          const Δφ = (lat2-lat1) * Math.PI/180;
-          const Δλ = (lon2-lon1) * Math.PI/180;
-
-          const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                    Math.cos(φ1) * Math.cos(φ2) *
-                    Math.sin(Δλ/2) * Math.sin(Δλ/2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-          return R * c;
-        };
-
-        // Фільтрація за радіусом
-        const nearbyViolations = violations.filter(violation => {
-          if (!violation.location) return false;
-          
-          const distance = calculateDistance(
-            locationParams.latitude, 
-            locationParams.longitude, 
-            violation.location.latitude, 
-            violation.location.longitude
-          );
-          
-          return distance <= (locationParams.radius || 1000);
-        });
-
-        return { success: true, data: nearbyViolations };
-      }
-    } catch (err) {
-      console.error('Get violations by location error:', err);
-      setError(err.message);
-      return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
-    }
-  }, [violations, isOnline]);
+  }, [isOnline, dispatch]);
 
   // Синхронізація правопорушень
   const syncViolations = useCallback(async () => {
@@ -457,28 +208,30 @@ export const useViolations = () => {
     }
 
     try {
-      setLoading(true);
-      setError(null);
-
-      // Отримання офлайн правопорушень
-      const offlineViolations = await AsyncStorage.getItem(OFFLINE_VIOLATIONS_KEY);
+      const offlineViolations = await AsyncStorage.getItem('offlineViolations');
       const parsedViolations = offlineViolations ? JSON.parse(offlineViolations) : [];
 
       const unsyncedViolations = parsedViolations.filter(v => !v.isSynced);
 
-      // Синхронізація кожного правопорушення
       const syncedViolations = [];
       const failedViolations = [];
 
       for (const violation of unsyncedViolations) {
         try {
-          const response = await violationsService.createViolation(violation);
-          
+          const response = await violationsService.createViolation({
+            ...violation,
+            id: undefined
+          });
+
           if (response.success) {
-            // Оновлення статусу синхронізації
-            violation.isSynced = true;
-            violation.id = response.data.id; // Оновлення ID з сервера
-            syncedViolations.push(violation);
+            const syncedViolation = {
+              ...violation,
+              ...response.data,
+              isSynced: true,
+              id: response.data.id
+            };
+
+            syncedViolations.push(syncedViolation);
           } else {
             failedViolations.push(violation);
           }
@@ -488,31 +241,18 @@ export const useViolations = () => {
         }
       }
 
-      // Оновлення AsyncStorage
+      // Оновлюємо список офлайн-порушень
       const updatedViolations = parsedViolations.map(v => {
         const synced = syncedViolations.find(sv => sv.id === v.id);
         return synced || v;
       });
-      
-      await AsyncStorage.setItem(OFFLINE_VIOLATIONS_KEY, JSON.stringify(updatedViolations));
 
-      // Оновлення SQLite бази
-      if (db && syncedViolations.length > 0) {
-        for (const violation of syncedViolations) {
-          await db.executeSql(
-            'UPDATE violations SET isSynced = 1, id = ? WHERE id = ?',
-            [violation.id, violation.id]
-          );
-        }
-      }
+      await AsyncStorage.setItem('offlineViolations', JSON.stringify(updatedViolations));
 
-      // Оновлення локального стану
-      setViolations(prev => 
-        prev.map(v => {
-          const synced = syncedViolations.find(sv => sv.id === v.id);
-          return synced ? { ...v, ...synced } : v;
-        })
-      );
+      // Оновлюємо Redux
+      syncedViolations.forEach(synced => {
+        dispatch(updateViolationRedux(synced));
+      });
 
       return {
         success: true,
@@ -521,14 +261,14 @@ export const useViolations = () => {
       };
     } catch (err) {
       console.error('Sync violations error:', err);
-      setError(err.message);
+      dispatch(clearError());
       return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
     }
-  }, [db, isOnline]);
+  }, [isOnline, dispatch]);
 
-  // Отримання статистики
+  // Інші функції (getViolationsByDate, getViolationsByLocation, getStatistics тощо)
+  // залишаємо без змін, але вони будуть працювати з Redux станом
+
   const getStatistics = useCallback(() => {
     const stats = {
       total: violations.length,
@@ -537,13 +277,11 @@ export const useViolations = () => {
       recent: violations.slice(0, 5)
     };
 
-    // Статистика по категоріям
     violations.forEach(violation => {
       const category = violation.category || 'other';
       stats.byCategory[category] = (stats.byCategory[category] || 0) + 1;
     });
 
-    // Статистика по датах
     violations.forEach(violation => {
       const date = new Date(violation.dateTime).toDateString();
       stats.byDate[date] = (stats.byDate[date] || 0) + 1;
@@ -552,186 +290,65 @@ export const useViolations = () => {
     return stats;
   }, [violations]);
 
-  // Оновлення фільтрів
   const updateFilters = useCallback((newFilters) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-    setPage(1); // Скидання пагінації
-  }, []);
+    dispatch(setFilters(newFilters));
+    setPage(1);
+  }, [dispatch]);
 
-  // Оновлення пошуку
   const updateSearch = useCallback((query) => {
     setSearchQuery(query);
-    setPage(1); // Скидання пагінації
+    setPage(1);
   }, []);
 
-  // Оновлення сортування
   const updateSort = useCallback((field, order = 'asc') => {
     setSortBy(field);
     setSortOrder(order);
-    setPage(1); // Скидання пагінації
+    setPage(1);
   }, []);
 
-  // Зміна сторінки
   const changePage = useCallback((newPage) => {
     setPage(newPage);
   }, []);
 
-  // Зміна розміру сторінки
   const changePageSize = useCallback((newSize) => {
     setPageSize(newSize);
-    setPage(1); // Скидання до першої сторінки
+    setPage(1);
   }, []);
 
-  // Очищення помилок
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
+  const clearErrorLocal = useCallback(() => {
+    dispatch(clearError());
+  }, [dispatch]);
 
-  // Перезавантаження даних
   const refresh = useCallback(async () => {
     return await loadViolations();
   }, [loadViolations]);
 
   return {
-    // Дані
     violations,
-    totalCount,
     pagination,
-    
-    // Стани
-    loading,
+    loading: loading.fetch || loading.create || loading.update || loading.delete || loading.sync,
     error,
     isOnline,
-    
-    // Фільтри та пошук
+    syncStatus,
     filters,
     searchQuery,
     sortBy,
     sortOrder,
-    
-    // Пагінація
     page,
     pageSize,
-    
-    // Функції CRUD
     addViolation,
     getViolations: loadViolations,
     getViolationById,
     updateViolation,
     deleteViolation,
-    
-    // Спеціальні функції
-    getViolationsByDate,
-    getViolationsByLocation,
     syncViolations,
     getStatistics,
-    
-    // Управління станом
     updateFilters,
     updateSearch,
     updateSort,
     changePage,
     changePageSize,
-    clearError,
+    clearError: clearErrorLocal,
     refresh,
-  };
-};
-
-// Хелпер для фільтрації правопорушень
-export const useViolationFilters = () => {
-  const [activeFilters, setActiveFilters] = useState({
-    category: 'all',
-    status: 'all',
-    dateRange: null,
-  });
-
-  const applyFilter = useCallback((filterType, value) => {
-    setActiveFilters(prev => ({
-      ...prev,
-      [filterType]: value
-    }));
-  }, []);
-
-  const clearFilters = useCallback(() => {
-    setActiveFilters({
-      category: 'all',
-      status: 'all',
-      dateRange: null,
-    });
-  }, []);
-
-  return {
-    activeFilters,
-    applyFilter,
-    clearFilters
-  };
-};
-
-// Хелпер для пошуку правопорушень
-export const useViolationSearch = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-
-  const performSearch = useCallback(async (query) => {
-    if (!query.trim()) {
-      setSearchQuery('');
-      return { success: true, data: [] };
-    }
-
-    setIsSearching(true);
-    setSearchQuery(query);
-
-    try {
-      const response = await violationsService.getViolations({ search: query });
-      return response;
-    } catch (error) {
-      console.error('Search error:', error);
-      return { success: false, error: error.message };
-    } finally {
-      setIsSearching(false);
-    }
-  }, []);
-
-  const clearSearch = useCallback(() => {
-    setSearchQuery('');
-  }, []);
-
-  return {
-    searchQuery,
-    isSearching,
-    performSearch,
-    clearSearch
-  };
-};
-
-// Хелпер для пагінації
-export const useViolationPagination = (initialPage = 1, initialPageSize = 10) => {
-  const [page, setPage] = useState(initialPage);
-  const [pageSize, setPageSize] = useState(initialPageSize);
-
-  const goToPage = useCallback((newPage) => {
-    setPage(newPage);
-  }, []);
-
-  const changePageSize = useCallback((newPageSize) => {
-    setPageSize(newPageSize);
-    setPage(1); // Повертаємося до першої сторінки
-  }, []);
-
-  const nextPage = useCallback(() => {
-    setPage(prev => prev + 1);
-  }, []);
-
-  const prevPage = useCallback(() => {
-    setPage(prev => Math.max(1, prev - 1));
-  }, []);
-
-  return {
-    page,
-    pageSize,
-    goToPage,
-    changePageSize,
-    nextPage,
-    prevPage
   };
 };

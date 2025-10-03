@@ -10,6 +10,8 @@ import {
   Alert,
   Platform,
   Animated,
+  Modal, // ДОДАНО
+  FlatList, // ДОДАНО
 } from 'react-native';
 import { useAppTheme } from '../../hooks/useTheme';
 import Input from '../common/Input';
@@ -74,15 +76,21 @@ const ViolationForm = React.forwardRef(({
   const [cameraPermission, setCameraPermission] = useState(null);
   const [isOnline, setIsOnline] = useState(network.isOnline() && network.isInternetReachable);
   
-  // Категорії правопорушенень
+  // Категорії правопорушеннь
   const categories = [
     { key: 'parking', label: t('violations.categories.parking') || 'Паркування' },
     { key: 'trash', label: t('violations.categories.trash') || 'Сміття' },
     { key: 'noise', label: t('violations.categories.noise') || 'Шум' },
     { key: 'traffic', label: t('violations.categories.traffic') || 'Порушення правил дорожнього руху' },
     { key: 'vandalism', label: t('violations.categories.vandalism') || 'Вандалізм' },
+    { key: 'public_safety', label: t('violations.categories.public_safety') || 'Безпека громадських місць' },
+    { key: 'infrastructure', label: t('violations.categories.infrastructure') || 'Інфраструктура' },
+    { key: 'environment', label: t('violations.categories.environment') || 'Навколишнє середовище' },
     { key: 'other', label: t('violations.categories.other') || 'Інше' }
   ];
+
+  // Анімація для модального вікна
+  const slideAnim = useRef(new Animated.Value(300)).current;
 
   // Анімація статусу мережі
   useEffect(() => {
@@ -102,6 +110,23 @@ const ViolationForm = React.forwardRef(({
     
     updateNetworkStatus();
   }, [network]);
+
+  // Анімація відкриття/закриття модального вікна
+  useEffect(() => {
+    if (showCategoryPicker) {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 300,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [showCategoryPicker]);
 
   // Додаємо методи для зовнішнього використання через ref
   useImperativeHandle(ref, () => ({
@@ -450,7 +475,74 @@ const ViolationForm = React.forwardRef(({
     return null;
   };
 
-  // Рендер вибору категорії з випадаючим списком
+  // Рендер елементу категорії для FlatList
+  const renderCategoryItem = ({ item }) => (
+    <TouchableOpacity
+      style={[styles.modalCategoryItem, { 
+        borderBottomColor: colors.border 
+      }]}
+      onPress={() => {
+        handleInputChange('category', item.key);
+        setShowCategoryPicker(false);
+      }}
+      disabled={loading}
+      accessibilityLabel={item.label}
+      accessibilityRole="button"
+    >
+      <Text style={[styles.modalCategoryItemText, { color: colors.text }]}>
+        {item.label}
+      </Text>
+      {formData.category === item.key && (
+        <Icon name="check" size={24} color={colors.primary} />
+      )}
+    </TouchableOpacity>
+  );
+
+  // Рендер модального вікна категорій
+  const renderCategoryModal = () => (
+    <Modal
+      visible={showCategoryPicker}
+      transparent={true}
+      animationType="none"
+      onRequestClose={() => setShowCategoryPicker(false)}
+    >
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowCategoryPicker(false)}
+      >
+        <Animated.View style={[
+          styles.modalContent,
+          {
+            backgroundColor: colors.background,
+            transform: [{ translateY: slideAnim }]
+          }
+        ]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {t('violations.category.select') || 'Оберіть категорію'}
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowCategoryPicker(false)}
+              style={styles.modalCloseButton}
+            >
+              <Icon name="close" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+          
+          <FlatList
+            data={categories}
+            renderItem={renderCategoryItem}
+            keyExtractor={(item) => item.key}
+            style={styles.modalList}
+            showsVerticalScrollIndicator={false}
+          />
+        </Animated.View>
+      </TouchableOpacity>
+    </Modal>
+  );
+
+  // Рендер вибору категорії з модальним вікном
   const renderCategorySelector = () => (
     <View style={styles.categoryContainer}>
       <View style={styles.labelRow}>
@@ -469,11 +561,10 @@ const ViolationForm = React.forwardRef(({
           backgroundColor: colors.card, 
           borderColor: errors.category ? colors.error : colors.border 
         }]}
-        onPress={() => !loading && setShowCategoryPicker(!showCategoryPicker)}
+        onPress={() => !loading && setShowCategoryPicker(true)}
         disabled={loading}
         accessibilityLabel={t('violations.category.select') || "Оберіть категорію правопорушення"}
         accessibilityRole="button"
-        accessibilityState={{ expanded: showCategoryPicker }}
       >
         <Text style={[styles.categorySelectorText, { 
           color: formData.category ? colors.text : colors.textSecondary 
@@ -483,52 +574,11 @@ const ViolationForm = React.forwardRef(({
             : t('violations.category.placeholder') || 'Оберіть категорію'
           }
         </Text>
-        <Icon 
-          name={showCategoryPicker ? "arrow-drop-up" : "arrow-drop-down"} 
-          size={24} 
-          color={colors.textSecondary} 
-        />
+        <Icon name="arrow-drop-down" size={24} color={colors.textSecondary} />
       </TouchableOpacity>
 
-      {/* Випадаючий список категорій зі скролом */}
-      {showCategoryPicker && (
-        <View style={[styles.categoryPickerContainer, { 
-          backgroundColor: colors.card, 
-          borderColor: colors.border,
-          shadowColor: colors.shadow,
-          elevation: 5,
-          maxHeight: 200,
-        }]}>
-          <ScrollView 
-            style={styles.categoryPickerScrollView}
-            showsVerticalScrollIndicator={true}
-            nestedScrollEnabled={true}
-          >
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category.key}
-                style={[styles.categoryItem, { 
-                  borderBottomColor: colors.border 
-                }]}
-                onPress={() => {
-                  handleInputChange('category', category.key);
-                  setShowCategoryPicker(false);
-                }}
-                disabled={loading}
-                accessibilityLabel={category.label}
-                accessibilityRole="button"
-              >
-                <Text style={[styles.categoryItemText, { color: colors.text }]}>
-                  {category.label}
-                </Text>
-                {formData.category === category.key && (
-                  <Icon name="check" size={20} color={colors.primary} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
+      {/* Модальне вікно категорій */}
+      {renderCategoryModal()}
     </View>
   );
 
@@ -749,8 +799,6 @@ const styles = StyleSheet.create({
   },
   categoryContainer: {
     marginBottom: 24,
-    zIndex: 1000,
-    position: 'relative',
   },
   categorySelector: {
     flexDirection: 'row',
@@ -766,31 +814,45 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
   },
-  categoryPickerContainer: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    borderRadius: 12,
-    borderWidth: 1,
-    zIndex: 1001,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    marginTop: 4,
-    overflow: 'hidden',
+  // Стилі для модального вікна
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
   },
-  categoryPickerScrollView: {
-    maxHeight: 200,
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 34, // Для безпечної зони
+    maxHeight: '70%',
   },
-  categoryItem: {
+  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalList: {
+    paddingHorizontal: 20,
+  },
+  modalCategoryItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
     borderBottomWidth: 1,
   },
-  categoryItemText: {
+  modalCategoryItemText: {
     fontSize: 16,
     flex: 1,
   },

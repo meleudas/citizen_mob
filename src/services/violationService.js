@@ -44,31 +44,13 @@ export const getViolation = async (id) => {
   }
 };
 
-// 3. Створення правопорушення
+// 3. Створення правопорушення - ВИПРАВЛЕНО
 export const createViolation = async (violationData) => {
   try {
-    // Використовуємо FormData для підтримки файлів
-    const formData = new FormData();
-    
-    // Додаємо всі поля
-    Object.keys(violationData).forEach(key => {
-      if (key === 'photos' && Array.isArray(violationData[key])) {
-        // Додаємо фото як окремі файли
-        violationData[key].forEach((file, index) => {
-          formData.append(`photos[${index}]`, file);
-        });
-      } else if (Array.isArray(violationData[key])) {
-        violationData[key].forEach((item, index) => {
-          formData.append(`${key}[${index}]`, item);
-        });
-      } else {
-        formData.append(key, violationData[key]);
-      }
-    });
-
-    const response = await api.post(VIOLATIONS_URL, formData, {
+    // Використовуємо JSON замість FormData
+    const response = await api.post('/violations', violationData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'application/json'
       }
     });
 
@@ -87,33 +69,13 @@ export const createViolation = async (violationData) => {
   }
 };
 
-// 4. Оновлення правопорушення
+// 4. Оновлення правопорушення - ВИПРАВЛЕНО
 export const updateViolation = async (id, violationData) => {
   try {
-    // Використовуємо FormData для підтримки файлів при оновленні
-    const formData = new FormData();
-    
-    // Додаємо всі поля
-    Object.keys(violationData).forEach(key => {
-      if (key === 'photos' && Array.isArray(violationData[key])) {
-        violationData[key].forEach((file, index) => {
-          formData.append(`photos[${index}]`, file);
-        });
-      } else if (Array.isArray(violationData[key])) {
-        violationData[key].forEach((item, index) => {
-          formData.append(`${key}[${index}]`, item);
-        });
-      } else {
-        formData.append(key, violationData[key]);
-      }
-    });
-
-    // Важливо: для оновлення з файлами використовуємо POST з _method
-    formData.append('_method', 'PUT');
-
-    const response = await api.post(`${VIOLATIONS_URL}/${id}`, formData, {
+    // Використовуємо JSON для оновлення
+    const response = await api.put(`${VIOLATIONS_URL}/${id}`, violationData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'application/json'
       }
     });
 

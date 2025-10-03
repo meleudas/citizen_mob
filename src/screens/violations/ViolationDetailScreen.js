@@ -12,24 +12,19 @@ import {
   Share,
   RefreshControl,
   Platform,
+  Image,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
-// Custom hooks
 import { useViolations } from '../../hooks/useViolations';
 import { useThemeColors } from '../../hooks/useTheme';
 import { useLanguage } from '../../hooks/useLanguage';
 
-// Common components
 import Card from '../../components/common/Card';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import Button from '../../components/common/Button';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-
-// Custom components
-import MapViewComponent from '../../components/maps/MapView';
-import MapMarker from '../../components/maps/MapMarker';
 
 const ViolationDetailScreen = () => {
   const route = useRoute();
@@ -45,14 +40,12 @@ const ViolationDetailScreen = () => {
   const { colors, isDark } = useThemeColors();
   const { t, formatDate } = useLanguage();
   
-  // Local state
   const [violation, setViolation] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [address, setAddress] = useState('');
-  const [mapRegion, setMapRegion] = useState(null);
   
-  // Load violation data on mount
   useEffect(() => {
+    console.log('🔧 ViolationDetailScreen mounted with id:', id);
     if (id) {
       loadViolation();
     }
@@ -60,34 +53,49 @@ const ViolationDetailScreen = () => {
   
   const loadViolation = async () => {
     try {
+      console.log('🔍 Loading violation with id:', id);
       const result = await getViolationById(id);
+      console.log('📊 getViolationById result:', JSON.stringify(result, null, 2));
+      
       if (result.success) {
-        setViolation(result.data);
+        console.log('✅ Success response received');
         
-        // Set up map region
-        if (result.data.location) {
-          setMapRegion({
-            latitude: result.data.location.latitude,
-            longitude: result.data.location.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          });
-          
-          // Get address from location
-          if (result.data.location.address) {
-            setAddress(result.data.location.address);
-          }
+        // Витягуємо реальні дані з result.data.data
+        const rawData = result.data?.data || result.data;
+        console.log('📄 Raw ', JSON.stringify(rawData, null, 2));
+        
+        // Адаптація структури даних з сервера
+        const adaptedViolation = {
+          ...rawData,
+          photo: rawData.photoUrl || rawData.photo,
+          location: rawData.location ? {
+            latitude: Array.isArray(rawData.location.coordinates) 
+              ? rawData.location.coordinates[1] 
+              : rawData.location.latitude,
+            longitude: Array.isArray(rawData.location.coordinates) 
+              ? rawData.location.coordinates[0] 
+              : rawData.location.longitude,
+            address: rawData.location.address,
+          } : null,
+        };
+        
+        console.log('🔄 Adapted violation ', JSON.stringify(adaptedViolation, null, 2));
+        
+        setViolation(adaptedViolation);
+        
+        if (adaptedViolation.location && adaptedViolation.location.address) {
+          setAddress(adaptedViolation.location.address);
         }
         
-        // Set navigation title
         navigation.setOptions({
-          title: result.data.description?.substring(0, 20) + '...' || t('violation.detail') || 'Деталі',
+          title: adaptedViolation.description?.substring(0, 20) + '...' || t('violation.detail') || 'Деталі',
         });
       } else {
+        console.log('❌ Error response:', result.error);
         throw new Error(result.error || t('violation.notFound') || 'Правопорушення не знайдено');
       }
     } catch (err) {
-      console.error('Error loading violation:', err);
+      console.error('💥 Error loading violation:', err);
       Alert.alert(
         t('error.title') || 'Помилка',
         err.message,
@@ -97,6 +105,7 @@ const ViolationDetailScreen = () => {
   };
   
   const onRefresh = async () => {
+    console.log('🔄 Refreshing violation data');
     setRefreshing(true);
     await loadViolation();
     setRefreshing(false);
@@ -105,16 +114,16 @@ const ViolationDetailScreen = () => {
   // Action handlers
   const onEdit = () => {
     Alert.alert(
-      t('violation.edit') || 'Редагування',
-      t('violation.editComingSoon') || 'Функція редагування скоро буде доступна',
+      t('violations.edit') || 'Редагування',
+      t('violations.editComingSoon') || 'Функція редагування скоро буде доступна',
       [{ text: 'OK' }]
     );
   };
   
   const onDelete = () => {
     Alert.alert(
-      t('violation.deleteConfirm') || 'Видалення правопорушення',
-      t('violation.deleteConfirmMessage') || 'Ви впевнені, що хочете видалити це правопорушення?',
+      t('violations.deleteConfirm') || 'Видалення правопорушення',
+      t('violations.deleteConfirmMessage') || 'Ви впевнені, що хочете видалити це правопорушення?',
       [
         {
           text: t('common.cancel') || 'Скасувати',
@@ -149,17 +158,17 @@ const ViolationDetailScreen = () => {
   
   const onShare = async () => {
     try {
-      const message = `${t('violation.sharedMessage') || 'Правопорушення'}:\n\n${violation.description}\n${t('category.' + violation.category) || violation.category}\n${formatDate(violation.dateTime)}`;
+      const message = `${t('violations.sharedMessage') || 'Правопорушення'}:\n\n${violation.description}\n${t('category.' + violation.category) || violation.category}\n${formatDate(violation.dateTime)}`;
       
       await Share.share({
         message: message,
-        title: t('violation.shareTitle') || 'Правопорушення',
+        title: t('violations.shareTitle') || 'Правопорушення',
       });
     } catch (error) {
       console.error('Share error:', error);
       Alert.alert(
         t('error.title') || 'Помилка',
-        t('violation.shareError') || 'Не вдалося поділитися правопорушенням'
+        t('violations.shareError') || 'Не вдалося поділитися правопорушенням'
       );
     }
   };
@@ -168,11 +177,11 @@ const ViolationDetailScreen = () => {
     if (!violation?.location) return;
     
     const { latitude, longitude } = violation.location;
-    const label = violation.description || t('violation.location') || 'Місце правопорушення';
     
+    // Використовуємо координати замість назви
     const urls = {
-      ios: `maps:?q=${label}&ll=${latitude},${longitude}`,
-      android: `geo:${latitude},${longitude}?q=${label}`,
+      ios: `maps://?ll=${latitude},${longitude}`,
+      android: `geo:${latitude},${longitude}?q=${latitude},${longitude}`,
     };
     
     const url = Platform.OS === 'ios' ? urls.ios : urls.android;
@@ -184,7 +193,7 @@ const ViolationDetailScreen = () => {
         } else {
           Alert.alert(
             t('error.title') || 'Помилка',
-            t('violation.mapsError') || 'Не вдалося відкрити карту'
+            t('violations.mapsError') || 'Не вдалося відкрити карту'
           );
         }
       })
@@ -192,12 +201,11 @@ const ViolationDetailScreen = () => {
         console.error('Open maps error:', err);
         Alert.alert(
           t('error.title') || 'Помилка',
-          t('violation.mapsError') || 'Не вдалося відкрити карту'
+          t('violations.mapsError') || 'Не вдалося відкрити карту'
         );
       });
   };
   
-  // Helper functions
   const getCategoryIcon = (category) => {
     const icons = {
       parking: 'local-parking',
@@ -228,12 +236,12 @@ const ViolationDetailScreen = () => {
   
   const getStatusText = (isSynced) => {
     return isSynced 
-      ? t('violation.status.synced') || 'Синхронізовано' 
-      : t('violation.status.pending') || 'Очікує синхронізації';
+      ? t('status.synced') || 'Синхронізовано' 
+      : t('status.pending') || 'Очікує синхронізації';
   };
   
-  // Render photo section
   const renderPhotoSection = () => {
+    console.log('🖼️ Rendering photo section, violation photo:', violation?.photo);
     if (!violation?.photo) {
       return (
         <Card 
@@ -256,102 +264,100 @@ const ViolationDetailScreen = () => {
         elevation="medium"
       >
         <View style={styles.photoContainer}>
-          {typeof violation.photo === 'string' ? (
-            <Image
-              source={{ uri: violation.photo }}
-              style={styles.photo}
-              resizeMode="contain"
-              accessibilityLabel={t('violation.photoDescription') || 'Фото правопорушення'}
-            />
-          ) : (
-            <Image
-              source={{ uri: violation.photo.uri }}
-              style={styles.photo}
-              resizeMode="contain"
-              accessibilityLabel={t('violation.photoDescription') || 'Фото правопорушення'}
-            />
-          )}
+          <Image
+            source={{ uri: typeof violation.photo === 'string' ? violation.photo.trim() : violation.photo.uri }}
+            style={styles.photo}
+            resizeMode="contain"
+            accessibilityLabel={t('violations.photoDescription') || 'Фото правопорушення'}
+          />
         </View>
       </Card>
     );
   };
   
-  // Render basic info section
-  const renderBasicInfoSection = () => (
-    <Card 
-      style={[styles.infoCard, { backgroundColor: colors.card }]}
-      elevation="small"
-    >
-      {/* Description */}
-      <View style={[styles.infoItem, { borderBottomColor: colors.border }]}>
-        <View style={styles.infoHeader}>
-          <Icon name="description" size={24} color={colors.textSecondary} />
-          <Text style={[styles.infoLabel, { color: colors.text }]}>
-            {t('violation.description') || 'Опис'}
+  const renderBasicInfoSection = () => {
+    console.log('📋 Rendering basic info section, violation:', violation);
+    return (
+      <Card 
+        style={[styles.infoCard, { backgroundColor: colors.card }]}
+        elevation="small"
+      >
+        {/* Description */}
+        <View style={[styles.infoItem, { borderBottomColor: colors.border }]}>
+          <View style={styles.infoHeader}>
+            <Icon name="description" size={24} color={colors.textSecondary} />
+            <Text style={[styles.infoLabel, { color: colors.text }]}>
+              {t('violation.description') || 'Опис'}
+            </Text>
+          </View>
+          <Text style={[styles.infoValue, { color: colors.text }]}>
+            {violation?.description || t('violations.noDescription') || 'Опис відсутній'}
           </Text>
         </View>
-        <Text style={[styles.infoValue, { color: colors.text }]}>
-          {violation?.description || t('violation.noDescription') || 'Опис відсутній'}
-        </Text>
-      </View>
-      
-      {/* Category */}
-      <View style={[styles.infoItem, { borderBottomColor: colors.border }]}>
-        <View style={styles.infoHeader}>
-          <Icon 
-            name={getCategoryIcon(violation?.category)} 
-            size={24} 
-            color={getCategoryColor(violation?.category)} 
-          />
-          <Text style={[styles.infoLabel, { color: colors.text }]}>
-            {t('violation.category') || 'Категорія'}
+        
+        {/* Category */}
+        <View style={[styles.infoItem, { borderBottomColor: colors.border }]}>
+          <View style={styles.infoHeader}>
+            <Icon 
+              name={getCategoryIcon(violation?.category)} 
+              size={24} 
+              color={getCategoryColor(violation?.category)} 
+            />
+            <Text style={[styles.infoLabel, { color: colors.text }]}>
+              {t('violations.category') || 'Категорія'}
+            </Text>
+          </View>
+          <Text style={[styles.infoValue, { color: getCategoryColor(violation?.category) }]}>
+            {t(`category.${violation?.category}`) || violation?.category || t('category.other') || 'Інше'}
           </Text>
         </View>
-        <Text style={[styles.infoValue, { color: getCategoryColor(violation?.category) }]}>
-          {t(`category.${violation?.category}`) || violation?.category || t('category.other') || 'Інше'}
-        </Text>
-      </View>
-      
-      {/* Date and Time */}
-      <View style={[styles.infoItem, { borderBottomColor: colors.border }]}>
-        <View style={styles.infoHeader}>
-          <Icon name="schedule" size={24} color={colors.textSecondary} />
-          <Text style={[styles.infoLabel, { color: colors.text }]}>
-            {t('violation.dateTime') || 'Дата та час'}
+        
+        {/* Date and Time */}
+        <View style={[styles.infoItem, { borderBottomColor: colors.border }]}>
+          <View style={styles.infoHeader}>
+            <Icon name="schedule" size={24} color={colors.textSecondary} />
+            <Text style={[styles.infoLabel, { color: colors.text }]}>
+              {t('violations.dateTime') || 'Дата та час'}
+            </Text>
+          </View>
+          <Text style={[styles.infoValue, { color: colors.text }]}>
+            {violation?.dateTime ? formatDate(violation.dateTime) : t('violations.noDateTime') || 'Дата не вказана'}
           </Text>
         </View>
-        <Text style={[styles.infoValue, { color: colors.text }]}>
-          {violation?.dateTime ? formatDate(violation.dateTime) : t('violation.noDateTime') || 'Дата не вказана'}
-        </Text>
-      </View>
-      
-      {/* Status */}
-      <View style={styles.infoItem}>
-        <View style={styles.infoHeader}>
-          <Icon 
-            name={violation?.isSynced ? 'check-circle' : 'sync'} 
-            size={24} 
-            color={getStatusColor(violation?.isSynced)} 
-          />
-          <Text style={[styles.infoLabel, { color: colors.text }]}>
-            {t('violation.status.title') || 'Статус'}
+        
+        {/* Status */}
+        <View style={styles.infoItem}>
+          <View style={styles.infoHeader}>
+            <Icon 
+              name={violation?.isSynced ? 'check-circle' : 'sync'} 
+              size={24} 
+              color={getStatusColor(violation?.isSynced)} 
+            />
+            <Text style={[styles.infoLabel, { color: colors.text }]}>
+              {t('violations.status') || 'Статус'}
+            </Text>
+          </View>
+          <Text style={[styles.infoValue, { color: getStatusColor(violation?.isSynced) }]}>
+            {getStatusText(violation?.isSynced)}
           </Text>
         </View>
-        <Text style={[styles.infoValue, { color: getStatusColor(violation?.isSynced) }]}>
-          {getStatusText(violation?.isSynced)}
-        </Text>
-      </View>
-    </Card>
-  );
+      </Card>
+    );
+  };
   
   // Render location section
   const renderLocationSection = () => {
-    if (!violation?.location) return null;
+    console.log('📍 Rendering location section, violation location:', violation?.location);
+    
+    if (!violation?.location) {
+      console.log('📍 No location data available');
+      return null;
+    }
     
     return (
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          {t('violation.location') || 'Місце'}
+          {t('violations.location') || 'Місце'}
         </Text>
         
         <Card 
@@ -359,108 +365,102 @@ const ViolationDetailScreen = () => {
           elevation="small"
         >
           {/* Address */}
+          {address ? (
+            <View style={[styles.locationItem, { borderBottomColor: colors.border }]}>
+              <View style={styles.locationHeader}>
+                <Icon name="location-on" size={24} color={colors.textSecondary} />
+                <Text style={[styles.locationLabel, { color: colors.text }]}>
+                  {t('violations.address') || 'Адреса'}
+                </Text>
+              </View>
+              <Text style={[styles.locationValue, { color: colors.text }]}>
+                {address}
+              </Text>
+            </View>
+          ) : null}
+          
+          {/* Coordinates */}
           <View style={[styles.locationItem, { borderBottomColor: colors.border }]}>
             <View style={styles.locationHeader}>
-              <Icon name="location-on" size={24} color={colors.textSecondary} />
+              <Icon name="gps-fixed" size={24} color={colors.textSecondary} />
               <Text style={[styles.locationLabel, { color: colors.text }]}>
-                {t('violation.address') || 'Адреса'}
+                {t('violations.coordinates') || 'Координати'}
               </Text>
             </View>
             <Text style={[styles.locationValue, { color: colors.text }]}>
-              {address || `${violation.location.latitude.toFixed(6)}, ${violation.location.longitude.toFixed(6)}`}
+              {`${violation.location.latitude.toFixed(6)}, ${violation.location.longitude.toFixed(6)}`}
             </Text>
-          </View>
-          
-          {/* Map */}
-          <View style={styles.mapContainer}>
-            {mapRegion && (
-              <MapViewComponent
-                region={mapRegion}
-                style={styles.map}
-                showsUserLocation={false}
-                scrollEnabled={false}
-                zoomEnabled={false}
-                rotateEnabled={false}
-                pitchEnabled={false}
-              >
-                <MapMarker
-                  coordinate={{
-                    latitude: violation.location.latitude,
-                    longitude: violation.location.longitude,
-                  }}
-                  category={violation.category}
-                  isCluster={false}
-                />
-              </MapViewComponent>
-            )}
           </View>
           
           {/* Open in Maps Button */}
           <Button
-            title={t('violation.openInMaps') || 'Відкрити в картах'}
+            title={t('violations.openInMaps') || 'Відкрити в картах'}
             onPress={onOpenInMaps}
             variant="outline"
             size="small"
             iconLeft={<Icon name="map" size={20} />}
             style={styles.openMapsButton}
-            accessibilityLabel={t('violation.openInMaps') || 'Відкрити в картах'}
+            accessibilityLabel={t('violations.openInMaps') || 'Відкрити в картах'}
           />
         </Card>
       </View>
     );
   };
   
-  // Render action buttons
-  const renderActionButtons = () => (
-    <View style={styles.actionsContainer}>
-      <View style={styles.mainActions}>
-        <Button
-          title={t('violation.edit') || 'Редагувати'}
-          onPress={onEdit}
-          variant="secondary"
-          size="large"
-          iconLeft={<Icon name="edit" size={20} />}
-          style={styles.actionButton}
-          accessibilityLabel={t('violation.edit') || 'Редагувати правопорушення'}
-        />
+  const renderActionButtons = () => {
+    console.log('🔘 Rendering action buttons');
+    return (
+      <View style={styles.actionsContainer}>
+        <View style={styles.mainActions}>
+          <Button
+            title={t('violations.edit') || 'Редагувати'}
+            onPress={onEdit}
+            variant="secondary"
+            size="large"
+            iconLeft={<Icon name="edit" size={20} />}
+            style={styles.actionButton}
+            accessibilityLabel={t('violations.edit') || 'Редагувати правопорушення'}
+          />
+          
+          <Button
+            title={t('violations.delete') || 'Видалити'}
+            onPress={onDelete}
+            variant="danger"
+            size="large"
+            iconLeft={<Icon name="delete" size={20} />}
+            style={styles.actionButton}
+            accessibilityLabel={t('violations.delete') || 'Видалити правопорушення'}
+          />
+        </View>
         
         <Button
-          title={t('violation.delete') || 'Видалити'}
-          onPress={onDelete}
-          variant="danger"
+          title={t('violations.share') || 'Поділитися'}
+          onPress={onShare}
+          variant="primary"
           size="large"
-          iconLeft={<Icon name="delete" size={20} />}
-          style={styles.actionButton}
-          accessibilityLabel={t('violation.delete') || 'Видалити правопорушення'}
+          iconLeft={<Icon name="share" size={20} />}
+          style={styles.shareButton}
+          accessibilityLabel={t('violations.share') || 'Поділитися правопорушенням'}
         />
       </View>
-      
-      <Button
-        title={t('violation.share') || 'Поділитися'}
-        onPress={onShare}
-        variant="primary"
-        size="large"
-        iconLeft={<Icon name="share" size={20} />}
-        style={styles.shareButton}
-        accessibilityLabel={t('violation.share') || 'Поділитися правопорушенням'}
-      />
-    </View>
-  );
+    );
+  };
   
   // Render loading state
   if (loading && !refreshing) {
+    console.log('⏳ Loading state active');
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <LoadingSpinner
           visible={true}
-          text={t('violation.loading') || 'Завантаження...'}
+          text={t('violations.loading') || 'Завантаження...'}
         />
       </SafeAreaView>
     );
   }
   
-  // Render error state
   if (error) {
+    console.log('⚠️ Error state:', error);
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <ErrorMessage
@@ -474,14 +474,14 @@ const ViolationDetailScreen = () => {
     );
   }
   
-  // Render empty state
   if (!violation && !loading) {
+    console.log('📭 No violation data and not loading');
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.emptyContainer}>
           <Icon name="error-outline" size={64} color={colors.textSecondary} />
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {t('violation.notFound') || 'Правопорушення не знайдено'}
+            {t('violations.notFound') || 'Правопорушення не знайдено'}
           </Text>
           <Button
             title={t('common.goBack') || 'Назад'}
@@ -494,6 +494,7 @@ const ViolationDetailScreen = () => {
     );
   }
   
+  console.log('✅ Rendering main content, violation data present');
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
@@ -524,10 +525,10 @@ const ViolationDetailScreen = () => {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-            {t('violation.id') || 'ID'}: {violation?.id}
+            {t('violations.id') || 'ID'}: {violation?.id}
           </Text>
           <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-            {t('violation.createdAt') || 'Створено'}: {violation?.createdAt ? formatDate(violation.createdAt) : ''}
+            {t('violations.createdAt') || 'Створено'}: {violation?.createdAt ? formatDate(violation.createdAt) : ''}
           </Text>
         </View>
       </ScrollView>
@@ -536,7 +537,7 @@ const ViolationDetailScreen = () => {
       <LoadingSpinner
         visible={loading && refreshing}
         overlay={true}
-        text={t('violation.updating') || 'Оновлення...'}
+        text={t('violations.updating') || 'Оновлення...'}
       />
     </SafeAreaView>
   );
@@ -670,16 +671,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
     paddingLeft: 36,
-  },
-  mapContainer: {
-    height: 200,
-    margin: 16,
-    marginBottom: 8,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  map: {
-    flex: 1,
   },
   openMapsButton: {
     margin: 16,

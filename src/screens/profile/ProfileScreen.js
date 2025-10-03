@@ -132,7 +132,7 @@ const ProfileScreen = () => {
   
   const onEditProfile = () => {
     // Переходимо до екрану редагування профілю
-    navigation.navigate('EditProfile');
+    navigation.navigate('ProfileEdit');
   };
   
   const onExportData = () => {

@@ -13,36 +13,27 @@ import { useAppTheme } from '../../hooks/useTheme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CALENDAR_WIDTH = SCREEN_WIDTH * 0.9;
-const DAY_SIZE = (CALENDAR_WIDTH - 48) / 7; // 48 = padding * 2
+const DAY_SIZE = (CALENDAR_WIDTH - 48) / 7;
 
 const CalendarView = ({
-  
-  // Основні пропси
-  violationDates = [], // Масив дат у форматі 'YYYY-MM-DD'
+  violationDates = [],
   onDateSelect,
   selectedDate,
   currentDate: propCurrentDate,
-  
-  // Налаштування
   locale = 'uk-UA',
   showWeekNumbers = false,
   minDate,
   maxDate,
-  
-  // Стилі
   style,
   dayStyle,
   selectedDayStyle,
   violationDayStyle,
-  
-  // Accessibility
   testID,
   accessibilityLabel,
   ...restProps
 }) => {
   const { colors } = useAppTheme();
-  
-  // Стан календаря
+
   const [currentDate, setCurrentDate] = useState(
     propCurrentDate ? new Date(propCurrentDate) : new Date()
   );
@@ -50,7 +41,6 @@ const CalendarView = ({
     selectedDate ? new Date(selectedDate) : null
   );
 
-  // Оновлення стану при зміні пропсів
   useEffect(() => {
     if (propCurrentDate) {
       setCurrentDate(new Date(propCurrentDate));
@@ -65,18 +55,19 @@ const CalendarView = ({
     }
   }, [selectedDate]);
 
-  // Форматування дат
   const formatDate = (date) => {
-    return date.toISOString().split('T')[0]; // YYYY-MM-DD
+    // Використовуємо toLocaleDateString для отримання дати в локальному часовому поясі
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
-  // Перевірка, чи є дата в масиві порушень
   const hasViolation = (date) => {
     const dateStr = formatDate(date);
     return violationDates.includes(dateStr);
   };
 
-  // Перевірка, чи дата вибрана
   const isSelected = (date) => {
     if (!selected) return false;
     return (
@@ -86,7 +77,6 @@ const CalendarView = ({
     );
   };
 
-  // Перевірка, чи дата сьогоднішня
   const isToday = (date) => {
     const today = new Date();
     return (
@@ -96,14 +86,12 @@ const CalendarView = ({
     );
   };
 
-  // Перевірка, чи дата доступна для вибору
   const isDateDisabled = (date) => {
     if (minDate && date < new Date(minDate)) return true;
     if (maxDate && date > new Date(maxDate)) return true;
     return false;
   };
 
-  // Навігація між місяцями
   const goToPreviousMonth = () => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
@@ -126,23 +114,19 @@ const CalendarView = ({
     handleDateSelect(today);
   };
 
-  // Обробка вибору дати
   const handleDateSelect = (date) => {
     if (isDateDisabled(date)) return;
-    
     setSelected(date);
     if (onDateSelect) {
       onDateSelect(formatDate(date));
     }
   };
 
-  // Отримання назв днів тижня
   const getWeekDays = () => {
     const weekdays = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
     return weekdays;
   };
 
-  // Отримання назв місяців
   const getMonthNames = () => {
     const months = [
       'Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень',
@@ -151,26 +135,19 @@ const CalendarView = ({
     return months;
   };
 
-  // Отримання днів місяця
   const getMonthDays = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-    
-    // Перший день місяця
+
     const firstDay = new Date(year, month, 1);
-    // Останній день місяця
     const lastDay = new Date(year, month + 1, 0);
-    // Останній день попереднього місяця
     const prevLastDay = new Date(year, month, 0).getDate();
-    
-    // День тижня першого дня місяця (0 = неділя, 1 = понеділок, ...)
+
     const firstDayOfWeek = firstDay.getDay();
-    // День тижня останнього дня місяця
     const lastDayOfWeek = lastDay.getDay();
-    
+
     const days = [];
-    
-    // Дні попереднього місяця
+
     for (let i = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; i > 0; i--) {
       const date = new Date(year, month - 1, prevLastDay - i + 1);
       days.push({
@@ -179,8 +156,7 @@ const CalendarView = ({
         isDisabled: isDateDisabled(date),
       });
     }
-    
-    // Дні поточного місяця
+
     for (let i = 1; i <= lastDay.getDate(); i++) {
       const date = new Date(year, month, i);
       days.push({
@@ -189,8 +165,7 @@ const CalendarView = ({
         isDisabled: isDateDisabled(date),
       });
     }
-    
-    // Дні наступного місяця
+
     const nextDays = 6 - (lastDayOfWeek === 0 ? 6 : lastDayOfWeek - 1);
     for (let i = 1; i <= nextDays; i++) {
       const date = new Date(year, month + 1, i);
@@ -200,11 +175,10 @@ const CalendarView = ({
         isDisabled: isDateDisabled(date),
       });
     }
-    
+
     return days;
   };
 
-  // Рендер заголовка календаря
   const renderHeader = () => {
     const monthNames = getMonthNames();
     const currentMonth = monthNames[currentDate.getMonth()];
@@ -246,17 +220,15 @@ const CalendarView = ({
           accessibilityRole="button"
         >
           <Text style={[styles.navButtonText, { color: colors.primary }]}>
-            →
+            → 
           </Text>
         </TouchableOpacity>
       </View>
     );
   };
 
-  // Рендер днів тижня
   const renderWeekDays = () => {
     const weekdays = getWeekDays();
-    
     return (
       <View style={styles.weekDaysContainer}>
         {weekdays.map((day, index) => (
@@ -273,10 +245,8 @@ const CalendarView = ({
     );
   };
 
-  // Рендер днів місяця
   const renderDays = () => {
     const days = getMonthDays();
-    
     return (
       <View style={styles.daysContainer}>
         {days.map((dayObj, index) => {
@@ -326,8 +296,6 @@ const CalendarView = ({
               ]}>
                 {date.getDate()}
               </Text>
-              
-              {/* Індикатор правопорушень */}
               {dayHasViolation && !dayIsSelected && (
                 <View style={[styles.violationIndicator, { backgroundColor: colors.primary }]} />
               )}
@@ -338,7 +306,6 @@ const CalendarView = ({
     );
   };
 
-  // Рендер легенди
   const renderLegend = () => {
     return (
       <View style={styles.legendContainer}>

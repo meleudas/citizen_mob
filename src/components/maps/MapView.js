@@ -23,16 +23,49 @@ const WebViewMap = ({
   const { colors } = useAppTheme();
   const [loading, setLoading] = useState(true);
 
+  // Фільтруємо маркери з валідними координатами
+  const validMarkers = markers.filter(marker => {
+    const isValid = marker && 
+                   (marker.latitude !== undefined && marker.longitude !== undefined) &&
+                   typeof marker.latitude === 'number' && 
+                   typeof marker.longitude === 'number' &&
+                   !isNaN(marker.latitude) && 
+                   !isNaN(marker.longitude);
+    
+    if (!isValid) {
+      console.log('Invalid marker filtered out:', marker);
+    }
+    
+    return isValid;
+  });
+
+
   // Формування HTML для карти
   const generateMapHTML = () => {
-    const defaultCenter = initialRegion || {
+    // Визначаємо центр карти
+    let defaultCenter = {
       latitude: 50.4501,
       longitude: 30.5234,
       zoom: 12
     };
 
+    // Якщо є поточна позиція користувача, використовуємо її
+    if (userLocation && 
+        typeof userLocation.latitude === 'number' && 
+        typeof userLocation.longitude === 'number') {
+      defaultCenter = {
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        zoom: 15
+      };
+    } 
+    // Якщо є initialRegion, використовуємо її
+    else if (initialRegion) {
+      defaultCenter = initialRegion;
+    }
+
     // Формування маркерів
-    const markersHTML = markers.map((marker, index) => {
+    const markersHTML = validMarkers.map((marker, index) => {
       const categoryColors = {
         parking: '#FF5722',
         trash: '#4CAF50',
@@ -40,16 +73,23 @@ const WebViewMap = ({
         traffic: '#2196F3',
         vandalism: '#9C27B0',
         other: '#607D8B',
+        public_safety: '#F44336',
+        infrastructure: '#9E9E9E',
+        environment: '#8BC34A',
       };
 
       const color = categoryColors[marker.category] || categoryColors.other;
       
+      // Використовуємо latitude/longitude напряму, а не з coordinate
+      const lat = marker.latitude;
+      const lng = marker.longitude;
+      
       return `
-        var marker${index} = L.marker([${marker.coordinate.latitude}, ${marker.coordinate.longitude}], {
+        var marker${index} = L.marker([${lat}, ${lng}], {
           title: "${marker.title || 'Правопорушення'}",
           icon: L.divIcon({
             className: 'custom-icon',
-            html: '<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">${marker.isCluster ? marker.count : '!'}</div>',
+            html: '<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">!</div>',
             iconSize: [24, 24],
             iconAnchor: [12, 12]
           })
@@ -65,7 +105,11 @@ const WebViewMap = ({
     }).join('\n');
 
     // Формування маркера користувача
-    const userLocationHTML = userLocation && showsUserLocation ? `
+    const userLocationHTML = userLocation && showsUserLocation && 
+                             typeof userLocation.latitude === 'number' && 
+                             typeof userLocation.longitude === 'number' &&
+                             !isNaN(userLocation.latitude) && 
+                             !isNaN(userLocation.longitude) ? `
       var userMarker = L.marker([${userLocation.latitude}, ${userLocation.longitude}], {
         title: "Ваша позиція",
         icon: L.divIcon({
@@ -168,6 +212,11 @@ const WebViewMap = ({
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'mapLoad'
             }));
+          });
+          
+          // Центрування карти при зміні розміру
+          window.addEventListener('resize', function() {
+            map.invalidateSize();
           });
         </script>
       </body>

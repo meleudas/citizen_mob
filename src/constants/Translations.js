@@ -19,7 +19,11 @@ export const translations = {
     'home.addFirstViolation': 'Додати перше правопорушення',
     'home.appVersion': 'Версія додатку',
     'home.loading': 'Завантаження...',
-    
+    'home.welcomeGuest': 'Вітаємо, гість. Ви можете переглядати правопорушення',
+    'home.goBack': 'Назад',
+    'home.guestAccess': 'Обмежений доступ',
+    'home.guestAddViolationMessage': 'Для додавання правопорушень потрібно увійти в обліковий запис',
+    'home.guestProfileMessage': 'Для перегляду профілю потрібно увійти в обліковий запис',
     // Навігація
     'navigation.calendar': 'Календар',
     'navigation.map': 'Карта',
@@ -27,7 +31,6 @@ export const translations = {
     'navigation.profile': 'Профіль',
     'navigation.settings': 'Налаштування',
     'navigation.home': 'Головна',
-
     // Авторизація
     'auth.login': 'Вхід',
     'auth.register': 'Реєстрація',
@@ -68,7 +71,6 @@ export const translations = {
     'auth.selectLanguage': 'Оберіть мову',
     'auth.continueAsGuest': 'Продовжити як гість',
     'auth.continueAsGuestAccessibility': 'Продовжити використання додатку без реєстрації',
-    'auth.register': 'Реєстрація',
     'auth.registerSubtitle': 'Створіть новий обліковий запис',
     'auth.firstNameMinLength': 'Ім\'я має містити мінімум 2 символи',
     'auth.firstNameRequired': 'Ім\'я обов\'язкове',
@@ -99,7 +101,9 @@ export const translations = {
     'auth.passwordStrength3': 'Надійний',
     'auth.passwordStrength4': 'Дуже надійний',
     'auth.passwordStrength5': 'Найкращий',
-      
+    'auth.logoutConfirm': 'Вихід',
+    'auth.logoutConfirmMessage': 'Ви впевнені, що хочете вийти?',
+    'auth.logout': 'Вийти',
     // Правопорушення
     'violations.title': 'Правопорушення',
     'violations.add': 'Додати правопорушення',
@@ -109,7 +113,130 @@ export const translations = {
     'violations.location': 'Локація',
     'violations.dateTime': 'Дата та час',
     'violations.status': 'Статус',
-    
+    'violations.detail': 'Деталі правопорушення',
+    'violations.notFound': 'Правопорушення не знайдено',
+    'violations.edit': 'Редагувати',
+    'violations.delete': 'Видалити',
+    'violations.share': 'Поділитися',
+    'violations.openInMaps': 'Відкрити в картах',
+    'violations.noPhoto': 'Фото відсутнє',
+    'violations.loading': 'Завантаження...',
+    'violations.updating': 'Оновлення...',
+    'violations.createdAt': 'Створено',
+    'violations.sortBy.category': 'Сортувати за категорією',
+    'violations.sortBy.description': 'Сортувати за описом',
+    'violations.sortBy.date': 'Сортувати за датою',
+    'violations.id': 'ID',
+    'violations.allCategories': 'Всі категорії',
+    'violations.searchPlaceholder': 'Пошук правопорушень...',
+    'violations.sortBy': 'Сортування',
+    'violations.sortBy.date': 'Дата',
+    'violations.sortBy.category': 'Категорія',
+    'violations.sortBy.description': 'Опис',
+    'violations.deleteSelected': 'Видалення правопорушень',
+    'violations.deleteSelectedConfirm': 'Ви впевнені, що хочете видалити',
+    'violations.items': 'елементів',
+    'violations.deleted': 'Видалено',
+    'violations.deletedSuccessfully': 'Успішно видалено',
+    'violations.deleteFailed': 'Помилок',
+    'violations.deleteError': 'Не вдалося видалити правопорушення',
+    'violations.synced': 'Синхронізовано',
+    'violations.syncedSuccessfully': 'Успішно синхронізовано',
+    'violations.syncFailed': 'Помилок',
+    'violations.syncError': 'Не вдалося синхронізувати правопорушення',
+    'violations.selected': 'вибрано',
+    'violations.deselectAll': 'Зняти виділення',
+    'violations.selectAll': 'Виділити все',
+    'violations.sync': 'Синхронізувати',
+    'violations.cancel': 'Скасувати',
+    'violations.deleteConfirm': 'Видалення правопорушення',
+    'violations.deleteConfirmMessage': 'Ви впевнені, що хочете видалити це правопорушення?',
+    'violations.deletedMessage': 'Правопорушення успішно видалено',
+    'violations.editComingSoon': 'Функція редагування скоро буде доступна',
+    'violations.noResults': 'Нічого не знайдено',
+    'violations.noViolations': 'Немає правопорушень',
+    'violations.tryDifferentSearch': 'Спробуйте інший пошук або фільтри',
+    'violations.addFirstViolation': 'Додайте перше правопорушення',
+    'violations.addViolation': 'Додати правопорушення',
+    'violations.clearFilters': 'Очистити фільтри',
+    'violations.loadingMore': 'Завантаження...',
+    'violations.refreshing': 'Оновлення...',
+    'violations.total': 'Всього',
+    'violations.filtered': 'Відфільтровано',
+    'violations.exitSelectionMode': 'Вийти з режиму виділення',
+    'violations.enterSelectionMode': 'Режим виділення',
+    'violations.loadError': 'Не вдалося завантажити правопорушення',
+    'violations.coordinates': 'Координати',
+    'violations.description.placeholder': 'Опишіть правопорушення...',
+    // Додаткові переклади для валідації форми додавання правопорушення
+    'violations.validation.descriptionMinLength': 'Опис має містити принаймні 10 символів',
+    'violations.validation.invalidCategory': 'Невірна категорія правопорушення',
+    'violations.validation.dateTimeRequired': 'Дата та час є обов\'язковими',
+    'violations.validation.invalidDateTime': 'Невірний формат дати',
+    'violations.validation.locationRequired': 'Локація є обов\'язковою',
+    'violations.validation.coordinatesRequired': 'Координати є обов\'язковими',
+    'violations.validation.invalidCoordinates': 'Координати мають бути числами',
+    // Додаткові переклади для результатів додавання
+    'violations.photoUploadError': 'Помилка завантаження фото',
+    'violations.addErrorMessage': 'Помилка при додаванні правопорушення',
+    'violations.offlineSaveTitle': 'Збережено офлайн',
+    'violations.offlineSaveMessage': 'Правопорушення збережено. Воно буде синхронізоване коли з\'явиться інтернет.',
+    'violations.offlineSaveError': 'Помилка збереження офлайн',
+    'violations.addSuccessMessage': 'Правопорушення успішно додано',
+    // Додаткові переклади для модального вікна скасування
+    'violations.form.cancelTitle': 'Скасувати форму?',
+    'violations.form.cancelMessage': 'Всі внесені зміни будуть втрачені. Ви впевнені, що хочете скасувати?',
+        // Переклади для категорій правопорушень (компонент ViolationForm)
+    'violations.categories.parking': 'Паркування',
+    'violations.categories.trash': 'Сміття',
+    'violations.categories.noise': 'Шум',
+    'violations.categories.traffic': 'Порушення ПДР',
+    'violations.categories.vandalism': 'Вандалізм',
+    'violations.categories.public_safety': 'Безпека громадських місць',
+    'violations.categories.infrastructure': 'Інфраструктура',
+    'violations.categories.environment': 'Навколишнє середовище',
+    'violations.categories.other': 'Інше',
+    // Переклади для помилок валідації (компонент ViolationForm)
+    'violations.errors.descriptionRequired': 'Опис обов\'язковий',
+    'violations.errors.descriptionMinLength': 'Опис має містити мінімум 10 символів',
+    'violations.errors.categoryRequired': 'Оберіть категорію',
+    'violations.errors.photoRequired': 'Фото обов\'язкове',
+    'violations.errors.locationRequired': 'Геолокація обов\'язкова',
+    'violations.errors.cameraPermissionDenied': 'Доступ до камери відмовлено',
+    'violations.errors.photoError': 'Помилка при зйомці фото',
+    'violations.errors.locationPermissionDenied': 'Доступ до геолокації відмовлено. Перевірте налаштування додатку.',
+    'violations.errors.locationError': 'Не вдалося отримати геолокацію. Перевірте налаштування додатку.',
+    'violations.errors.locationSettings': 'Геолокація вимкнена. Увімкніть її в налаштуваннях пристрою.',
+    // Переклади для фото (компонент ViolationForm)
+    'violations.photo.loading': 'Завантаження фото...',
+    'violations.photo.preview': 'Попередній перегляд фото',
+    'violations.photo.remove': 'Видалити фото',
+    'violations.photo.add': 'Зробити фото правопорушення',
+    'violations.photo.take': 'Зробити фото',
+    'violations.photo.tapToCapture': 'Натисніть для зйомки',
+    'violations.photo.offlineMode': 'Режим офлайн',
+    // Переклади для локації (компонент ViolationForm)
+    'violations.location.loading': 'Отримання геолокації...',
+    'violations.location.obtained': 'Отримано',
+    'violations.location.get': 'Отримати геолокацію',
+    'violations.location.update': 'Оновити геолокацію',
+    // Переклади для дати/часу (компонент ViolationForm)
+    'violations.dateTime.select': 'Оберіть дату та час',
+    // Переклади для вибору категорії (компонент ViolationForm)
+    'violations.category.select': 'Оберіть категорію',
+    'violations.category.placeholder': 'Оберіть категорію',
+    // Переклади для заголовка форми (компонент ViolationForm)
+    'violations.form.addTitle': 'Додати правопорушення',
+    // Переклади для статусу мережі (компонент ViolationForm)
+    'common.online': 'Онлайн',
+    'common.offline': 'Офлайн',
+    // Переклади для збереження (компонент ViolationForm)
+    'violations.saving': 'Збереження правопорушення...',
+    // Переклади для опису (компонент ViolationForm)
+    'violations.description.placeholder': 'Детально опишіть правопорушення...',
+    // Додатковий заголовок для успішного додавання (може використовуватися, але звучить як 'Успіх', тому можна використовувати існуючий 'common.success')
+    // 'violations.addSuccessTitle': 'Успіх', // Закоментовано, бо краще використовувати 'common.success'
+
     // Категорії
     'category.parking': 'Паркування',
     'category.trash': 'Сміття',
@@ -117,12 +244,13 @@ export const translations = {
     'category.traffic': 'Порушення ПДР',
     'category.vandalism': 'Вандалізм',
     'category.other': 'Інше',
-    
+    'category.environment': "Навколишнє середовище",
+    'category.public_safety': 'Громадська безпека',
+    'category.infrastructure': 'Інфраструктура',
     // Статуси
     'status.synced': 'Синхронізовано',
     'status.pending': 'Очікує синхронізації',
     'status.error': 'Помилка',
-    
     // Загальні
     'common.save': 'Зберегти',
     'common.cancel': 'Скасувати',
@@ -137,27 +265,33 @@ export const translations = {
     'common.ok': 'OK',
     'common.yes': 'Так',
     'common.no': 'Ні',
-    
     // Дати
     'date.today': 'Сьогодні',
     'date.yesterday': 'Вчора',
     'date.tomorrow': 'Завтра',
-    
     // Підтвердження
     'confirm.delete': 'Ви впевнені, що хочете видалити?',
     'confirm.logout': 'Ви впевнені, що хочете вийти?',
-    'auth.logoutConfirm': 'Вихід',
-    'auth.logoutConfirmMessage': 'Ви впевнені, що хочете вийти?',
-    'auth.logout': 'Вийти',
-
-    'home.welcomeGuest': 'Вітаємо, гість',
-    'home.goBack': 'Назад',
-    'home.guestAccess': 'Обмежений доступ',
-    'home.guestAddViolationMessage': 'Для додавання правопорушень потрібно увійти в обліковий запис',
-    'home.guestProfileMessage': 'Для перегляду профілю потрібно увійти в обліковий запис',
-    'home.welcomeGuest': 'Вітаємо, гість. Ви можете переглядати правопорушення',
-    'home.goBack': 'Назад', 
-    
+    // Вкладки
+    'tabs.home': 'Головна',
+    'tabs.map': 'Карта',
+    'tabs.add': 'Додати',
+    'tabs.calendar': 'Календар',
+    'tabs.profile': 'Профіль',
+    // Карта
+    'map.title': 'Карта',
+    'map.search': 'Пошук локації',
+    // Календар
+    'calendar.title': 'Календар',
+    'calendar.noEvents': 'Немає подій',
+    // Додати порушення
+    'addViolation.title': 'Додати порушення',
+    'addViolation.description': 'Повідомити про порушення',
+    'addViolation.submit': 'Надіслати',
+    // Профіль
+    'profile.title': 'Профіль',
+    'profile.settings': 'Налаштування',
+    'profile.logout': 'Вийти',
     'profile.editProfile': 'Редагувати профіль',
     'profile.editProfileComingSoon': 'Функція редагування профілю скоро буде доступна',
     'profile.exportData': 'Експорт даних',
@@ -175,17 +309,9 @@ export const translations = {
     'profile.items': 'елементів',
     'profile.noActivity': 'Немає історії активності',
     'profile.additionalActions': 'Додаткові дії',
-    'profile.settings': 'Налаштування',
     'profile.appVersion': 'Версія додатку',
     'profile.loading': 'Завантаження...',
-    'profile.anonymous': 'Анонімний користувач',
-    'category.parking': 'Паркування',
-    'category.trash': 'Сміття',
-    'category.noise': 'Шум',
-    'category.traffic': 'Порушення ПДР',
-    'category.vandalism': 'Вандалізм',
-    'category.other': 'Інше',
-
+    // Налаштування
     'settings.theme.title': 'Тема',
     'settings.theme.light': 'Світла',
     'settings.theme.dark': 'Темна',
@@ -234,40 +360,10 @@ export const translations = {
     'settings.appName': 'Законослухняний громадянин',
     'settings.copyright': 'Всі права захищені',
     'settings.loggingOut': 'Вихід...',
-
-   
-  // Головна сторінка
-  'home.welcome': 'Вітаємо',
-  'home.description': 'Ласкаво просимо до додатку',
-  'home.getStarted': 'Почати',
-  
-  // Вкладки
-  'tabs.home': 'Головна',
-  'tabs.map': 'Карта',
-  'tabs.add': 'Додати',
-  'tabs.calendar': 'Календар',
-  'tabs.profile': 'Профіль',
-  
-  // Карта
-  'map.title': 'Карта',
-  'map.search': 'Пошук локації',
-  
-  // Календар
-  'calendar.title': 'Календар',
-  'calendar.noEvents': 'Немає подій',
-  
-  // Додати порушення
-  'addViolation.title': 'Додати порушення',
-  'addViolation.description': 'Повідомити про порушення',
-  'addViolation.submit': 'Надіслати',
-  
-  // Профіль
-  'profile.title': 'Профіль',
-  'profile.settings': 'Налаштування',
-  'profile.logout': 'Вийти',
-
+    'error.title': 'Помилка',
+    'home.description': 'Ласкаво просимо до додатку',
+    'home.getStarted': 'Почати',
   },
-  
   en: {
     // Home Screen
     'home.welcome': 'Welcome',
@@ -288,7 +384,11 @@ export const translations = {
     'home.addFirstViolation': 'Add First Violation',
     'home.appVersion': 'App Version',
     'home.loading': 'Loading...',
-    
+    'home.welcomeGuest': 'Welcome, Guest. You can browse violations',
+    'home.goBack': 'Go Back',
+    'home.guestAccess': 'Limited Access',
+    'home.guestAddViolationMessage': 'You need to log in to add violations',
+    'home.guestProfileMessage': 'You need to log in to view profile',
     // Navigation
     'navigation.calendar': 'Calendar',
     'navigation.map': 'Map',
@@ -296,7 +396,6 @@ export const translations = {
     'navigation.profile': 'Profile',
     'navigation.settings': 'Settings',
     'navigation.home': 'Home',
-
     // Authentication
     'auth.login': 'Login',
     'auth.register': 'Register',
@@ -337,7 +436,6 @@ export const translations = {
     'auth.selectLanguage': 'Select Language',
     'auth.continueAsGuest': 'Continue as Guest',
     'auth.continueAsGuestAccessibility': 'Continue using the app without registration',
-    'auth.register': 'Register',
     'auth.registerSubtitle': 'Create a new account',
     'auth.firstNameMinLength': 'First name must be at least 2 characters',
     'auth.firstNameRequired': 'First name is required',
@@ -368,6 +466,9 @@ export const translations = {
     'auth.passwordStrength3': 'Strong',
     'auth.passwordStrength4': 'Very Strong',
     'auth.passwordStrength5': 'Excellent',
+    'auth.logoutConfirm': 'Logout',
+    'auth.logoutConfirmMessage': 'Are you sure you want to logout?',
+    'auth.logout': 'Logout',
     // Violations
     'violations.title': 'Violations',
     'violations.add': 'Add Violation',
@@ -377,7 +478,129 @@ export const translations = {
     'violations.location': 'Location',
     'violations.dateTime': 'Date and Time',
     'violations.status': 'Status',
-    
+    'violations.detail': 'Violation Details',
+    'violations.notFound': 'Violation not found',
+    'violations.edit': 'Edit',
+    'violations.delete': 'Delete',
+    'violations.share': 'Share',
+    'violations.openInMaps': 'Open in Maps',
+    'violations.noPhoto': 'No photo',
+    'violations.loading': 'Loading...',
+    'violations.updating': 'Updating...',
+    'violations.createdAt': 'Created at',
+    'violations.id': 'ID',
+    'violations.sortBy.category': 'Sort by Category',
+    'violations.sortBy.description': 'Sort by Description',
+    'violations.sortBy.date': 'Sort by Date',
+    'violations.allCategories': 'All Categories',
+    'violations.searchPlaceholder': 'Search violations...',
+    'violations.sortBy': 'Sorting',
+    'violations.sortBy.date': 'Date',
+    'violations.sortBy.category': 'Category',
+    'violations.sortBy.description': 'Description',
+    'violations.deleteSelected': 'Delete Violations',
+    'violations.deleteSelectedConfirm': 'Are you sure you want to delete',
+    'violations.items': 'items',
+    'violations.deleted': 'Deleted',
+    'violations.deletedSuccessfully': 'Successfully deleted',
+    'violations.deleteFailed': 'Failed',
+    'violations.deleteError': 'Failed to delete violation',
+    'violations.synced': 'Synced',
+    'violations.syncedSuccessfully': 'Successfully synced',
+    'violations.syncFailed': 'Failed',
+    'violations.syncError': 'Failed to sync violations',
+    'violations.selected': 'selected',
+    'violations.deselectAll': 'Deselect all',
+    'violations.selectAll': 'Select all',
+    'violations.sync': 'Sync',
+    'violations.cancel': 'Cancel',
+    'violations.deleteConfirm': 'Delete Violation',
+    'violations.deleteConfirmMessage': 'Are you sure you want to delete this violation?',
+    'violations.deletedMessage': 'Violation successfully deleted',
+    'violations.editComingSoon': 'Edit function coming soon',
+    'violations.noResults': 'No results found',
+    'violations.noViolations': 'No violations',
+    'violations.tryDifferentSearch': 'Try different search or filters',
+    'violations.addFirstViolation': 'Add first violation',
+    'violations.addViolation': 'Add violation',
+    'violations.clearFilters': 'Clear filters',
+    'violations.loadingMore': 'Loading...',
+    'violations.refreshing': 'Updating...',
+    'violations.total': 'Total',
+    'violations.filtered': 'Filtered',
+    'violations.exitSelectionMode': 'Exit selection mode',
+    'violations.enterSelectionMode': 'Selection mode',
+    'violations.loadError': 'Failed to load violations',
+    'violations.coordinates': 'Coordinates',
+    'violations.description.placeholder': 'Describe the violation...',
+        // Additional translations for add violation form validation
+    'violations.validation.descriptionMinLength': 'Description must be at least 10 characters',
+    'violations.validation.invalidCategory': 'Invalid violation category',
+    'violations.validation.dateTimeRequired': 'Date and time are required',
+    'violations.validation.invalidDateTime': 'Invalid date format',
+    'violations.validation.locationRequired': 'Location is required',
+    'violations.validation.coordinatesRequired': 'Coordinates are required',
+    'violations.validation.invalidCoordinates': 'Coordinates must be numbers',
+    // Additional translations for add results
+    'violations.photoUploadError': 'Photo upload error',
+    'violations.addErrorMessage': 'Error adding violation',
+    'violations.offlineSaveTitle': 'Saved Offline',
+    'violations.offlineSaveMessage': 'Violation saved. It will be synced when internet is available.',
+    'violations.offlineSaveError': 'Offline save error',
+    'violations.addSuccessMessage': 'Violation successfully added',
+    // Additional translations for cancel modal
+    'violations.form.cancelTitle': 'Cancel form?',
+    'violations.form.cancelMessage': 'All changes will be lost. Are you sure you want to cancel?',
+        // Translations for violation categories (ViolationForm component)
+    'violations.categories.parking': 'Parking',
+    'violations.categories.trash': 'Trash',
+    'violations.categories.noise': 'Noise',
+    'violations.categories.traffic': 'Traffic Violations',
+    'violations.categories.vandalism': 'Vandalism',
+    'violations.categories.public_safety': 'Public Safety',
+    'violations.categories.infrastructure': 'Infrastructure',
+    'violations.categories.environment': 'Environment',
+    'violations.categories.other': 'Other',
+    // Translations for validation errors (ViolationForm component)
+    'violations.errors.descriptionRequired': 'Description is required',
+    'violations.errors.descriptionMinLength': 'Description must be at least 10 characters',
+    'violations.errors.categoryRequired': 'Select a category',
+    'violations.errors.photoRequired': 'Photo is required',
+    'violations.errors.locationRequired': 'Location is required',
+    'violations.errors.cameraPermissionDenied': 'Camera access denied',
+    'violations.errors.photoError': 'Error taking photo',
+    'violations.errors.locationPermissionDenied': 'Location access denied. Check app settings.',
+    'violations.errors.locationError': 'Failed to get location. Check app settings.',
+    'violations.errors.locationSettings': 'Location is disabled. Enable it in device settings.',
+    // Translations for photo (ViolationForm component)
+    'violations.photo.loading': 'Loading photo...',
+    'violations.photo.preview': 'Photo preview',
+    'violations.photo.remove': 'Remove photo',
+    'violations.photo.add': 'Take a photo of the violation',
+    'violations.photo.take': 'Take Photo',
+    'violations.photo.tapToCapture': 'Tap to capture',
+    'violations.photo.offlineMode': 'Offline mode',
+    // Translations for location (ViolationForm component)
+    'violations.location.loading': 'Getting location...',
+    'violations.location.obtained': 'Obtained',
+    'violations.location.get': 'Get Location',
+    'violations.location.update': 'Update Location',
+    // Translations for date/time (ViolationForm component)
+    'violations.dateTime.select': 'Select date and time',
+    // Translations for category selection (ViolationForm component)
+    'violations.category.select': 'Select category',
+    'violations.category.placeholder': 'Select category',
+    // Translations for form title (ViolationForm component)
+    'violations.form.addTitle': 'Add Violation',
+    // Translations for network status (ViolationForm component)
+    'common.online': 'Online',
+    'common.offline': 'Offline',
+    // Translations for saving (ViolationForm component)
+    'violations.saving': 'Saving violation...',
+    // Translations for description (ViolationForm component)
+    'violations.description.placeholder': 'Describe the violation in detail...',
+    // Additional title for successful add (can be used, but sounds like 'Success', so 'common.success' can be used)
+    // 'violations.addSuccessTitle': 'Success', // Commented out, as it's better to use 'common.success'
     // Categories
     'category.parking': 'Parking',
     'category.trash': 'Trash',
@@ -385,12 +608,13 @@ export const translations = {
     'category.traffic': 'Traffic Violations',
     'category.vandalism': 'Vandalism',
     'category.other': 'Other',
-    
+    'category.environment': "Environment",
+    'category.public_safety': 'Public Safety',
+    'category.infrastructure': 'Infrastructure',
     // Statuses
-    'status.synced': 'Synced',
     'status.pending': 'Pending Sync',
+    'status.synced': 'Synced',
     'status.error': 'Error',
-    
     // Common
     'common.save': 'Save',
     'common.cancel': 'Cancel',
@@ -405,25 +629,33 @@ export const translations = {
     'common.ok': 'OK',
     'common.yes': 'Yes',
     'common.no': 'No',
-    
     // Dates
     'date.today': 'Today',
     'date.yesterday': 'Yesterday',
     'date.tomorrow': 'Tomorrow',
-    
     // Confirmation
     'confirm.delete': 'Are you sure you want to delete?',
     'confirm.logout': 'Are you sure you want to logout?',
-    'auth.logoutConfirm': 'Logout',
-    'auth.logoutConfirmMessage': 'Are you sure you want to logout?',
-    'auth.logout': 'Logout',
-
-    'home.guestAccess': 'Limited Access',
-    'home.guestAddViolationMessage': 'You need to log in to add violations',
-    'home.guestProfileMessage': 'You need to log in to view profile',
-    'home.welcomeGuest': 'Welcome, Guest. You can browse violations',
-    'home.goBack': 'Go Back',
-
+    // Tabs
+    'tabs.home': 'Home',
+    'tabs.map': 'Map',
+    'tabs.add': 'Add',
+    'tabs.calendar': 'Calendar',
+    'tabs.profile': 'Profile',
+    // Map
+    'map.title': 'Map',
+    'map.search': 'Search location',
+    // Calendar
+    'calendar.title': 'Calendar',
+    'calendar.noEvents': 'No events',
+    // Add Violation
+    'addViolation.title': 'Add Violation',
+    'addViolation.description': 'Report a violation',
+    'addViolation.submit': 'Submit',
+    // Profile
+    'profile.title': 'Profile',
+    'profile.settings': 'Settings',
+    'profile.logout': 'Logout',
     'profile.editProfile': 'Edit Profile',
     'profile.editProfileComingSoon': 'Profile editing feature coming soon',
     'profile.exportData': 'Export Data',
@@ -441,16 +673,9 @@ export const translations = {
     'profile.items': 'items',
     'profile.noActivity': 'No activity history',
     'profile.additionalActions': 'Additional Actions',
-    'profile.settings': 'Settings',
     'profile.appVersion': 'App Version',
     'profile.loading': 'Loading...',
-    'category.parking': 'Parking',
-    'category.trash': 'Trash',
-    'category.noise': 'Noise',
-    'category.traffic': 'Traffic Violations',
-    'category.vandalism': 'Vandalism',
-    'category.other': 'Other',
-
+    // Settings
     'settings.theme.title': 'Theme',
     'settings.theme.light': 'Light',
     'settings.theme.dark': 'Dark',
@@ -499,38 +724,10 @@ export const translations = {
     'settings.appName': 'Law-Abiding Citizen',
     'settings.copyright': 'All Rights Reserved',
     'settings.loggingOut': 'Logging Out...',
-
-
-     'home.welcome': 'Welcome',
-  'home.description': 'Welcome to the application',
-  'home.getStarted': 'Get Started',
-  
-  // Вкладки
-  'tabs.home': 'Home',
-  'tabs.map': 'Map',
-  'tabs.add': 'Add',
-  'tabs.calendar': 'Calendar',
-  'tabs.profile': 'Profile',
-  
-  // Карта
-  'map.title': 'Map',
-  'map.search': 'Search location',
-  
-  // Календар
-  'calendar.title': 'Calendar',
-  'calendar.noEvents': 'No events',
-  
-  // Додати порушення
-  'addViolation.title': 'Add Violation',
-  'addViolation.description': 'Report a violation',
-  'addViolation.submit': 'Submit',
-  
-  // Профіль
-  'profile.title': 'Profile',
-  'profile.settings': 'Settings',
-  'profile.logout': 'Logout',
+    'error.title': 'Error',
+    'home.description': 'Welcome to the application',
+    'home.getStarted': 'Get Started',
   },
-  
   pl: {
     // Strona główna
     'home.welcome': 'Witaj',
@@ -551,7 +748,11 @@ export const translations = {
     'home.addFirstViolation': 'Dodaj pierwsze wykroczenie',
     'home.appVersion': 'Wersja aplikacji',
     'home.loading': 'Ładowanie...',
-    
+    'home.welcomeGuest': 'Witaj, Gościu. Możesz przeglądać wykroczenia',
+    'home.goBack': 'Wróć',
+    'home.guestAccess': 'Ograniczony dostęp',
+    'home.guestAddViolationMessage': 'Aby dodać wykroczenia, musisz się zalogować',
+    'home.guestProfileMessage': 'Aby wyświetlić profil, musisz się zalogować',
     // Nawigacja
     'navigation.calendar': 'Kalendarz',
     'navigation.map': 'Mapa',
@@ -559,7 +760,6 @@ export const translations = {
     'navigation.profile': 'Profil',
     'navigation.settings': 'Ustawienia',
     'navigation.home': 'Główna',
-    
     // Autoryzacja
     'auth.login': 'Logowanie',
     'auth.register': 'Rejestracja',
@@ -600,7 +800,6 @@ export const translations = {
     'auth.selectLanguage': 'Wybierz język',
     'auth.continueAsGuest': 'Kontynuuj jako gość',
     'auth.continueAsGuestAccessibility': 'Kontynuuj korzystanie z aplikacji bez rejestracji',
-    'auth.register': 'Rejestracja',
     'auth.registerSubtitle': 'Utwórz nowe konto',
     'auth.firstNameMinLength': 'Imię musi mieć co najmniej 2 znaki',
     'auth.firstNameRequired': 'Imię jest wymagane',
@@ -631,6 +830,9 @@ export const translations = {
     'auth.passwordStrength3': 'Silne',
     'auth.passwordStrength4': 'Bardzo silne',
     'auth.passwordStrength5': 'Najlepsze',
+    'auth.logoutConfirm': 'Wylogowanie',
+    'auth.logoutConfirmMessage': 'Czy na pewno chcesz się wylogować?',
+    'auth.logout': 'Wyloguj',
     // Wykroczenia
     'violations.title': 'Wykroczenia',
     'violations.add': 'Dodaj wykroczenie',
@@ -640,7 +842,129 @@ export const translations = {
     'violations.location': 'Lokalizacja',
     'violations.dateTime': 'Data i godzina',
     'violations.status': 'Status',
-    
+    'violations.detail': 'Szczegóły wykroczenia',
+    'violations.notFound': 'Wykroczenie nie znalezione',
+    'violations.edit': 'Edytuj',
+    'violations.delete': 'Usuń',
+    'violations.share': 'Udostępnij',
+    'violations.openInMaps': 'Otwórz w mapach',
+    'violations.noPhoto': 'Brak zdjęcia',
+    'violations.loading': 'Ładowanie...',
+    'violations.updating': 'Aktualizowanie...',
+    'violations.createdAt': 'Utworzono',
+    'violations.id': 'ID',
+    'violations.sortBy.category': 'Sortuj według kategorii',
+    'violations.sortBy.description': 'Sortuj według opisu',
+    'violations.sortBy.date': 'Sortuj według daty',
+    'violations.allCategories': 'Wszystkie kategorie',
+    'violations.searchPlaceholder': 'Wyszukaj wykroczenia...',
+    'violations.sortBy': 'Sortowanie',
+    'violations.sortBy.date': 'Data',
+    'violations.sortBy.category': 'Kategoria',
+    'violations.sortBy.description': 'Opis',
+    'violations.deleteSelected': 'Usuwanie wykroczeń',
+    'violations.deleteSelectedConfirm': 'Czy na pewno chcesz usunąć',
+    'violations.items': 'elementów',
+    'violations.deleted': 'Usunięto',
+    'violations.deletedSuccessfully': 'Pomyślnie usunięto',
+    'violations.deleteFailed': 'Błędów',
+    'violations.deleteError': 'Nie udało się usunąć wykroczenia',
+    'violations.synced': 'Zsynchronizowano',
+    'violations.syncedSuccessfully': 'Pomyślnie zsynchronizowano',
+    'violations.syncFailed': 'Błędów',
+    'violations.syncError': 'Nie udało się zsynchronizować wykroczeń',
+    'violations.selected': 'wybrano',
+    'violations.deselectAll': 'Odznacz wszystkie',
+    'violations.selectAll': 'Zaznacz wszystkie',
+    'violations.sync': 'Synchronizuj',
+    'violations.cancel': 'Anuluj',
+    'violations.deleteConfirm': 'Usuwanie wykroczenia',
+    'violations.deleteConfirmMessage': 'Czy na pewno chcesz usunąć to wykroczenie?',
+    'violations.deletedMessage': 'Wykroczenie pomyślnie usunięte',
+    'violations.editComingSoon': 'Funkcja edycji będzie dostępna wkrótce',
+    'violations.noResults': 'Nic nie znaleziono',
+    'violations.noViolations': 'Brak wykroczeń',
+    'violations.tryDifferentSearch': 'Spróbuj innego wyszukiwania lub filtrów',
+    'violations.addFirstViolation': 'Dodaj pierwsze wykroczenie',
+    'violations.addViolation': 'Dodaj wykroczenie',
+    'violations.clearFilters': 'Wyczyść filtry',
+    'violations.loadingMore': 'Ładowanie...',
+    'violations.refreshing': 'Aktualizowanie...',
+    'violations.total': 'Łącznie',
+    'violations.filtered': 'Przefiltrowano',
+    'violations.exitSelectionMode': 'Wyjdź z trybu zaznaczania',
+    'violations.enterSelectionMode': 'Tryb zaznaczania',
+    'violations.loadError': 'Nie udało się załadować wykroczeń',
+    'violations.coordinates': 'Współrzędne',
+        // Dodatkowe tłumaczenia dla walidacji formularza dodawania wykroczenia
+    'violations.validation.descriptionMinLength': 'Opis musi zawierać co najmniej 10 znaków',
+    'violations.validation.invalidCategory': 'Nieprawidłowa kategoria wykroczenia',
+    'violations.validation.dateTimeRequired': 'Data i godzina są wymagane',
+    'violations.validation.invalidDateTime': 'Nieprawidłowy format daty',
+    'violations.validation.locationRequired': 'Lokalizacja jest wymagana',
+    'violations.validation.coordinatesRequired': 'Współrzędne są wymagane',
+    'violations.validation.invalidCoordinates': 'Współrzędne muszą być liczbami',
+    'violations.description.placeholder' : 'Opisz wykroczenie...',
+    // Dodatkowe tłumaczenia dla wyników dodawania
+    'violations.photoUploadError': 'Błąd przesyłania zdjęcia',
+    'violations.addErrorMessage': 'Błąd podczas dodawania wykroczenia',
+    'violations.offlineSaveTitle': 'Zapisano w trybie offline',
+    'violations.offlineSaveMessage': 'Wykroczenie zostało zapisane. Zostanie zsynchronizowane, gdy będzie dostęp do internetu.',
+    'violations.offlineSaveError': 'Błąd zapisu w trybie offline',
+    'violations.addSuccessMessage': 'Wykroczenie zostało pomyślnie dodane',
+    // Dodatkowe tłumaczenia dla modalnego okna anulowania
+    'violations.form.cancelTitle': 'Anulować formularz?',
+    'violations.form.cancelMessage': 'Wszystkie zmiany zostaną utracone. Czy na pewno chcesz anulować?',
+        // Tłumaczenia dla kategorii wykroczeń (komponent ViolationForm)
+    'violations.categories.parking': 'Parking',
+    'violations.categories.trash': 'Śmieci',
+    'violations.categories.noise': 'Hałas',
+    'violations.categories.traffic': 'Wykroczenia drogowe',
+    'violations.categories.vandalism': 'Wandalizm',
+    'violations.categories.public_safety': 'Bezpieczeństwo publiczne',
+    'violations.categories.infrastructure': 'Infrastruktura',
+    'violations.categories.environment': 'Środowisko',
+    'violations.categories.other': 'Inne',
+    // Tłumaczenia dla błędów walidacji (komponent ViolationForm)
+    'violations.errors.descriptionRequired': 'Opis jest wymagany',
+    'violations.errors.descriptionMinLength': 'Opis musi zawierać co najmniej 10 znaków',
+    'violations.errors.categoryRequired': 'Wybierz kategorię',
+    'violations.errors.photoRequired': 'Zdjęcie jest wymagane',
+    'violations.errors.locationRequired': 'Lokalizacja jest wymagana',
+    'violations.errors.cameraPermissionDenied': 'Odmowa dostępu do aparatu',
+    'violations.errors.photoError': 'Błąd podczas robienia zdjęcia',
+    'violations.errors.locationPermissionDenied': 'Odmowa dostępu do lokalizacji. Sprawdź ustawienia aplikacji.',
+    'violations.errors.locationError': 'Nie udało się uzyskać lokalizacji. Sprawdź ustawienia aplikacji.',
+    'violations.errors.locationSettings': 'Lokalizacja jest wyłączona. Włącz ją w ustawieniach urządzenia.',
+    // Tłumaczenia dla zdjęcia (komponent ViolationForm)
+    'violations.photo.loading': 'Ładowanie zdjęcia...',
+    'violations.photo.preview': 'Podgląd zdjęcia',
+    'violations.photo.remove': 'Usuń zdjęcie',
+    'violations.photo.add': 'Zrób zdjęcie wykroczenia',
+    'violations.photo.take': 'Zrób zdjęcie',
+    'violations.photo.tapToCapture': 'Dotknij, aby zrobić zdjęcie',
+    'violations.photo.offlineMode': 'Tryb offline',
+    // Tłumaczenia dla lokalizacji (komponent ViolationForm)
+    'violations.location.loading': 'Uzyskiwanie lokalizacji...',
+    'violations.location.obtained': 'Uzyskano',
+    'violations.location.get': 'Uzyskaj lokalizację',
+    'violations.location.update': 'Zaktualizuj lokalizację',
+    // Tłumaczenia dla daty/godziny (komponent ViolationForm)
+    'violations.dateTime.select': 'Wybierz datę i godzinę',
+    // Tłumaczenia dla wyboru kategorii (komponent ViolationForm)
+    'violations.category.select': 'Wybierz kategorię',
+    'violations.category.placeholder': 'Wybierz kategorię',
+    // Tłumaczenia dla tytułu formularza (komponent ViolationForm)
+    'violations.form.addTitle': 'Dodaj wykroczenie',
+    // Tłumaczenia dla statusu sieci (komponent ViolationForm)
+    'common.online': 'Online',
+    'common.offline': 'Offline',
+    // Tłumaczenia dla zapisywania (komponent ViolationForm)
+    'violations.saving': 'Zapisywanie wykroczenia...',
+    // Tłumaczenia dla opisu (komponent ViolationForm)
+    'violations.description.placeholder': 'Opisz szczegółowo wykroczenie...',
+    // Dodatkowy tytuł dla pomyślnego dodania (może być używany, ale brzmi jak 'Sukces', więc można użyć 'common.success')
+    // 'violations.addSuccessTitle': 'Sukces', // Zakomentowane, ponieważ lepiej użyć 'common.success'
     // Kategorie
     'category.parking': 'Parking',
     'category.trash': 'Śmieci',
@@ -648,12 +972,13 @@ export const translations = {
     'category.traffic': 'Wykroczenia drogowe',
     'category.vandalism': 'Wandalizm',
     'category.other': 'Inne',
-    
+    'category.environment': "Środowisko",
+    'category.public_safety': 'Bezpieczeństwo publiczne',
+    'category.infrastructure': 'Infrastruktura',
     // Statusy
-    'status.synced': 'Zsynchronizowane',
     'status.pending': 'Oczekuje na synchronizację',
+    'status.synced': 'Zsynchronizowano',
     'status.error': 'Błąd',
-    
     // Ogólne
     'common.save': 'Zapisz',
     'common.cancel': 'Anuluj',
@@ -668,25 +993,33 @@ export const translations = {
     'common.ok': 'OK',
     'common.yes': 'Tak',
     'common.no': 'Nie',
-    
     // Daty
     'date.today': 'Dzisiaj',
     'date.yesterday': 'Wczoraj',
     'date.tomorrow': 'Jutro',
-    
     // Potwierdzenie
     'confirm.delete': 'Czy na pewno chcesz usunąć?',
     'confirm.logout': 'Czy na pewno chcesz się wylogować?',
-    'auth.logoutConfirm': 'Wylogowanie',
-    'auth.logoutConfirmMessage': 'Czy na pewno chcesz się wylogować?',
-    'auth.logout': 'Wyloguj',
-
-    'home.guestAccess': 'Ograniczony dostęp',
-    'home.guestAddViolationMessage': 'Aby dodać wykroczenia, musisz się zalogować',
-    'home.guestProfileMessage': 'Aby wyświetlić profil, musisz się zalogować',
-    'home.welcomeGuest': 'Witaj, Gościu. Możesz przeglądać wykroczenia',
-    'home.goBack': 'Wróć',
-
+    // Вкладки
+    'tabs.home': 'Strona główna',
+    'tabs.map': 'Mapa',
+    'tabs.add': 'Dodaj',
+    'tabs.calendar': 'Kalendarz',
+    'tabs.profile': 'Profil',
+    // Карта
+    'map.title': 'Mapa',
+    'map.search': 'Wyszukaj lokalizację',
+    // Календар
+    'calendar.title': 'Kalendarz',
+    'calendar.noEvents': 'Brak wydarzeń',
+    // Додати порушення
+    'addViolation.title': 'Dodaj naruszenie',
+    'addViolation.description': 'Zgłoś naruszenie',
+    'addViolation.submit': 'Wyślij',
+    // Профіль
+    'profile.title': 'Profil',
+    'profile.settings': 'Ustawienia',
+    'profile.logout': 'Wyloguj',
     'profile.editProfile': 'Edytuj profil',
     'profile.editProfileComingSoon': 'Funkcja edycji profilu będzie dostępna wkrótce',
     'profile.exportData': 'Eksport danych',
@@ -704,17 +1037,9 @@ export const translations = {
     'profile.items': 'elementów',
     'profile.noActivity': 'Brak historii aktywności',
     'profile.additionalActions': 'Dodatkowe działania',
-    'profile.settings': 'Ustawienia',
     'profile.appVersion': 'Wersja aplikacji',
     'profile.loading': 'Ładowanie...',
-    'category.parking': 'Parking',
-    'category.trash': 'Śmieci',
-    'category.noise': 'Hałas',
-    'category.traffic': 'Wykroczenia drogowe',
-    'category.vandalism': 'Wandalizm',
-    'category.other': 'Inne',
-
-
+    // Ustawienia
     'settings.theme.title': 'Motyw',
     'settings.theme.light': 'Jasny',
     'settings.theme.dark': 'Ciemny',
@@ -763,35 +1088,8 @@ export const translations = {
     'settings.appName': 'Obywatel przestrzegający prawa',
     'settings.copyright': 'Wszelkie prawa zastrzeżone',
     'settings.loggingOut': 'Wylogowywanie...',
-
-
-    'home.welcome': 'Witaj',
+    'error.title': 'Błąd',
     'home.description': 'Witaj w aplikacji',
     'home.getStarted': 'Rozpocznij',
-  
-  // Вкладки
-    'tabs.home': 'Strona główna',
-    'tabs.map': 'Mapa',
-    'tabs.add': 'Dodaj',
-    'tabs.calendar': 'Kalendarz',
-    'tabs.profile': 'Profil',
-    
-  // Карта
-    'map.title': 'Mapa',
-    'map.search': 'Wyszukaj lokalizację',
-    
-  // Календар
-    'calendar.title': 'Kalendarz',
-    'calendar.noEvents': 'Brak wydarzeń',
-    
-  // Додати порушення
-    'addViolation.title': 'Dodaj naruszenie',
-    'addViolation.description': 'Zgłoś naruszenie',
-    'addViolation.submit': 'Wyślij',
-    
-  // Профіль
-    'profile.title': 'Profil',
-    'profile.settings': 'Ustawienia',
-    'profile.logout': 'Wyloguj', 
   }
 };

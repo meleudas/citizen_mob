@@ -3,13 +3,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Базова URL для API
 const BASE_URL = __DEV__ 
-  ? 'http://192.168.3.143:3000/api' 
-  : 'https://your-production-api.com/api';
+  ? 'http://192.168.3.22:3000/api' 
+  : 'https://server.citizen-mob.com/api';
 
-// Таймаути
-const TIMEOUT = 10000; // 10 секунд
 
-// Токени
+const TIMEOUT = 10000; 
+
+
 const TOKEN_KEY = 'userToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 
@@ -30,7 +30,6 @@ class ApiClient {
     this.refreshToken = null;
   }
 
-  // Отримання токенів з AsyncStorage
   async getTokens() {
     try {
       const token = await AsyncStorage.getItem(TOKEN_KEY);
@@ -46,7 +45,6 @@ class ApiClient {
     }
   }
 
-  // Збереження токенів в AsyncStorage
   async setTokens(token, refreshToken) {
     try {
       if (token) {
@@ -63,7 +61,6 @@ class ApiClient {
     }
   }
 
-  // Видалення токенів з AsyncStorage
   async clearTokens() {
     try {
       await AsyncStorage.removeItem(TOKEN_KEY);
@@ -76,7 +73,6 @@ class ApiClient {
     }
   }
 
-  // Створення заголовків для запиту
   getHeaders(includeAuth = true, contentType = 'application/json') {
     const headers = {};
 
@@ -91,14 +87,12 @@ class ApiClient {
     return headers;
   }
 
-  // Таймаут для запитів
   getTimeoutPromise() {
     return new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Час запиту вичерпано')), TIMEOUT);
     });
   }
 
-  // Виконання HTTP запиту
   async request(endpoint, options = {}) {
     const {
       method = 'GET',
@@ -117,7 +111,6 @@ class ApiClient {
       headers: requestHeaders,
     };
 
-    // Додавання даних для POST/PUT/PATCH запитів
     if (data && method !== 'GET') {
       if (contentType === 'application/json') {
         requestOptions.body = JSON.stringify(data);
@@ -127,7 +120,6 @@ class ApiClient {
     }
 
     try {
-      // Виконання запиту з таймаутом
       const response = await Promise.race([
         fetch(url, requestOptions),
         new Promise((_, reject) => {
@@ -137,7 +129,6 @@ class ApiClient {
 
       const responseData = await response.json();
 
-      // Обробка помилок
       if (!response.ok) {
         const error = new Error(responseData.message || 'Помилка API запиту');
         error.statusCode = response.status;
@@ -153,11 +144,9 @@ class ApiClient {
     } catch (error) {
       console.error('API request error:', error);
 
-      // Обробка помилки авторизації (401)
       if (error.statusCode === 401 && this.refreshToken) {
         try {
           await this.refreshAccessToken();
-          // Повторний запит після оновлення токена
           return await this.request(endpoint, options);
         } catch (refreshError) {
           console.error('Token refresh error:', refreshError);
@@ -175,7 +164,6 @@ class ApiClient {
     }
   }
 
-  // Оновлення access токена
   async refreshAccessToken() {
     if (!this.refreshToken) {
       throw new Error('Немає refresh токена для оновлення');
@@ -221,13 +209,12 @@ class ApiClient {
     return await this.request(endpoint, { ...options, method: 'DELETE' });
   }
 
-  // Завантаження файлу
+
   async uploadFile(endpoint, file, fieldName = 'file', additionalData = {}) {
     try {
       const formData = new FormData();
       formData.append(fieldName, file);
 
-      // Додавання додаткових даних
       Object.keys(additionalData).forEach(key => {
         formData.append(key, additionalData[key]);
       });
@@ -249,7 +236,6 @@ class ApiClient {
     }
   }
 
-  // Перевірка з'єднання
   async checkConnection() {
     try {
       const response = await Promise.race([
@@ -266,7 +252,6 @@ class ApiClient {
     }
   }
 
-  // Отримання інформації про API
   getApiInfo() {
     return {
       baseUrl: this.baseUrl,

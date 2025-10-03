@@ -5122,6 +5122,11 @@ react-native-maps@1.20.1:
   dependencies:
     "@types/geojson" "^7946.0.13"
 
+react-native-netinfo@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/react-native-netinfo/-/react-native-netinfo-1.1.0.tgz#343a4a9413006493f350bc7923688bb3315c3dce"
+  integrity sha512-muGzEvfCm9i+MF1qgPF1LsUmRxaTUWQ9i2TTbBoE/DBfsprv4Ds27iYLQvAgX5QzAMJm+iYKCq+3QN/hvPxrsQ==
+
 react-native-reanimated@~4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/react-native-reanimated/-/react-native-reanimated-4.1.0.tgz#dd0a2495b14fa344d7f482131ecae79110fa59cd"

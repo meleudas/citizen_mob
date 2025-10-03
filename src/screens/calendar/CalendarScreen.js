@@ -14,7 +14,6 @@ import { useAppTheme } from '../../hooks/useTheme';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useViolations } from '../../hooks/useViolations';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import Button from '../../components/common/Button';
 
 const CalendarScreen = () => {
   const navigation = useNavigation();
@@ -51,7 +50,11 @@ const CalendarScreen = () => {
       const dates = violations.map(violation => {
         if (violation.dateTime) {
           const date = new Date(violation.dateTime);
-          return date.toISOString().split('T')[0]; // YYYY-MM-DD
+          // Використовуємо той самий метод форматування
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
         }
         return '';
       }).filter(date => date !== '');
@@ -68,7 +71,10 @@ const CalendarScreen = () => {
     const selectedViolations = violations.filter(violation => {
       if (violation.dateTime) {
         const violationDate = new Date(violation.dateTime);
-        const violationDateString = violationDate.toISOString().split('T')[0];
+        const year = violationDate.getFullYear();
+        const month = String(violationDate.getMonth() + 1).padStart(2, '0');
+        const day = String(violationDate.getDate()).padStart(2, '0');
+        const violationDateString = `${year}-${month}-${day}`;
         return violationDateString === dateString;
       }
       return false;
@@ -89,27 +95,6 @@ const CalendarScreen = () => {
       year: 'numeric'
     });
     
-    Alert.alert(
-      `${t('calendar.violationsForDate') || 'Правопорушення'} ${formattedDate}`,
-      violationsList.map((v, index) => 
-        `${index + 1}. ${v.description || t('calendar.noDescription') || 'Без опису'}`
-      ).join('\n'),
-      [
-        {
-          text: t('common.ok') || 'OK',
-          style: 'default'
-        },
-        {
-          text: t('calendar.viewDetails') || 'Деталі',
-          onPress: () => {
-            // Переходимо до першого правопорушення зі списку
-            if (violationsList.length > 0) {
-              navigation.navigate('ViolationDetail', { id: violationsList[0].id });
-            }
-          }
-        }
-      ]
-    );
   };
 
   // Отримання кількості правопорушень для дати
@@ -126,7 +111,10 @@ const CalendarScreen = () => {
   const handleGoToToday = () => {
     const today = new Date();
     setCurrentDate(today);
-    setSelectedDate(today.toISOString().split('T')[0]);
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    setSelectedDate(`${year}-${month}-${day}`);
   };
 
   return (
@@ -187,14 +175,23 @@ const CalendarScreen = () => {
               {getViolationCountForDate(selectedDate)} {t('calendar.violations') || 'правопорушень'}
             </Text>
             
-            <Button
-              title={t('calendar.viewViolations') || 'Переглянути правопорушення'}
+            <TouchableOpacity
+              style={[
+                styles.viewButton,
+                {
+                  backgroundColor: getViolationCountForDate(selectedDate) === 0 ? colors.disabled : colors.primary,
+                  opacity: getViolationCountForDate(selectedDate) === 0 ? 0.5 : 1,
+                }
+              ]}
               onPress={() => {
                 // Фільтруємо правопорушення для вибраної дати
                 const dateViolations = violations.filter(v => {
                   if (v.dateTime) {
                     const violationDate = new Date(v.dateTime);
-                    const violationDateString = violationDate.toISOString().split('T')[0];
+                    const year = violationDate.getFullYear();
+                    const month = String(violationDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(violationDate.getDate()).padStart(2, '0');
+                    const violationDateString = `${year}-${month}-${day}`;
                     return violationDateString === selectedDate;
                   }
                   return false;
@@ -207,10 +204,12 @@ const CalendarScreen = () => {
                   });
                 }
               }}
-              variant="primary"
-              style={styles.viewButton}
               disabled={getViolationCountForDate(selectedDate) === 0}
-            />
+            >
+              <Text style={[styles.viewButtonText, { color: colors.white }]}>
+                {t('calendar.viewViolations') || 'Переглянути правопорушення'}
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
         
@@ -220,12 +219,14 @@ const CalendarScreen = () => {
             <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
               {t('calendar.noViolations') || 'Немає правопорушень для відображення'}
             </Text>
-            <Button
-              title={t('calendar.addFirst') || 'Додати перше правопорушення'}
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: colors.primary }]}
               onPress={() => navigation.navigate('MainTabs', { screen: 'add' })}
-              variant="primary"
-              style={styles.addButton}
-            />
+            >
+              <Text style={[styles.addButtonText, { color: colors.white }]}>
+                {t('calendar.addFirst') || 'Додати перше правопорушення'}
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
@@ -287,6 +288,13 @@ const styles = StyleSheet.create({
   },
   viewButton: {
     alignSelf: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  viewButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
@@ -300,6 +308,13 @@ const styles = StyleSheet.create({
   },
   addButton: {
     marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

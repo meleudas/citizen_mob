@@ -152,6 +152,9 @@ const RegisterScreen = () => {
     clearFormError();
   };
 
+// src/screens/auth/RegisterScreen.js
+// ... інший код ...
+
   const onSubmit = async (data) => {
     console.log('📤 [RegisterScreen.onSubmit] === ПОЧАТОК ВІДПРАВКИ ФОРМИ ===');
     console.log('📤 [RegisterScreen.onSubmit] Дані з форми:', data);
@@ -176,28 +179,9 @@ const RegisterScreen = () => {
       console.log('📥 [RegisterScreen.onSubmit] Результат реєстрації:', registerResult);
       
       if (registerResult.success) {
-        // Автоматичний вхід після реєстрації
-        console.log('✅ [RegisterScreen.onSubmit] Реєстрація успішна, виконую вхід...');
-        
-        // Виправлення: передаємо об'єкт замість окремих параметрів
-        const loginResult = await login({
-          email: data.email,
-          password: data.password,
-          rememberMe: false // або використовуйте значення з форми, якщо є
-        });
-        
-        if (loginResult.success) {
-          console.log('🎉 [RegisterScreen.onSubmit] Автоматичний вхід успішний');
-          // Навігація до головного екрану
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'MainTabs' }],
-          });
-        } else {
-          // Якщо автоматичний вхід не вдався, перенаправляємо на Login
-          console.log('⚠️ [RegisterScreen.onSubmit] Автоматичний вхід не вдався, перенаправлення на Login');
-          navigation.navigate('Login');
-        }
+        console.log('✅ [RegisterScreen.onSubmit] Реєстрація успішна');
+        // ПЕРЕКИДАЄМО НА ЕКРАН ВХОДУ
+        navigation.navigate('Login');
       } else {
         // Обробка помилок реєстрації
         if (registerResult.error?.toLowerCase().includes('email')) {
@@ -211,6 +195,8 @@ const RegisterScreen = () => {
       setError(t('auth.registrationFailed') || 'Помилка реєстрації');
     }
   };
+
+// ... інший код ...
   // Handle login navigation
   const handleLogin = () => {
     navigation.navigate('Login');

@@ -53,7 +53,6 @@ class AuthService {
     this.refreshToken = null;
   }
 
-  // Отримання інформації про пристрій
   getDeviceInfo() {
     return {
       platform: Platform.OS,
@@ -64,7 +63,6 @@ class AuthService {
     };
   }
 
-  // Збереження даних користувача
   async saveUserData(user, token, refreshToken) {
     try {
       console.log('💾 [AuthService.saveUserData] Початок збереження даних користувача');
@@ -74,7 +72,6 @@ class AuthService {
         hasRefreshToken: !!refreshToken
       });
 
-      // Валідація даних перед збереженням
       if (!user) {
         const errorMsg = 'Відсутні дані користувача';
         console.error('❌ [AuthService.saveUserData] ПОМИЛКА: ' + errorMsg);
@@ -94,12 +91,10 @@ class AuthService {
 
       console.log('💾 [AuthService.saveUserData] Підготовлені дані для збереження');
 
-      // Підготовка даних для AsyncStorage
       const storageData = [
         [USER_DATA_KEY, JSON.stringify(userData)]
       ];
 
-      // Додаємо токени лише якщо вони існують
       if (token) {
         storageData.push([USER_TOKEN_KEY, token]);
       }
@@ -107,17 +102,14 @@ class AuthService {
         storageData.push([REFRESH_TOKEN_KEY, refreshToken]);
       }
 
-      // Збереження в AsyncStorage
       await AsyncStorage.multiSet(storageData);
       console.log('💾 [AuthService.saveUserData] Дані збережені в AsyncStorage');
 
-      // Оновлення локального стану
       this.currentUser = userData;
       this.token = token;
       this.refreshToken = refreshToken || null;
       this.isAuthenticated = true;
 
-      // Оновлення токена в API клієнті
       if (token) {
         api.setTokens(token, refreshToken);
       }
@@ -129,7 +121,6 @@ class AuthService {
     }
   }
   
-  // Завантаження збережених даних користувача
   async loadUserData() {
     try {
       const userData = await AsyncStorage.getItem(USER_DATA_KEY);
@@ -143,7 +134,6 @@ class AuthService {
         this.refreshToken = refreshToken;
         this.isAuthenticated = true;
 
-        // Оновлення токена в API клієнті
         api.setTokens(token, refreshToken);
 
         return { success: true, user: parsedUserData };
@@ -156,10 +146,8 @@ class AuthService {
     }
   }
 
-  // Очищення даних користувача
   async clearUserData() {
     try {
-      // Видалення з AsyncStorage
       await AsyncStorage.multiRemove([
         USER_DATA_KEY,
         USER_TOKEN_KEY,
@@ -167,13 +155,11 @@ class AuthService {
         DEVICE_INFO_KEY,
       ]);
 
-      // Очищення локального стану
       this.currentUser = null;
       this.token = null;
       this.refreshToken = null;
       this.isAuthenticated = false;
 
-      // Очищення токена в API клієнті
       api.clearTokens();
 
       return { success: true };
@@ -456,13 +442,14 @@ class AuthService {
    * @param {Partial<User>} userData - Оновлені дані користувача
    * @returns {Promise<{success: boolean, user?: User, error?: string}>}
    */
-  async updateProfile(userData) {
+ async updateProfile(userData) {
     try {
       if (!this.isAuthenticated || !this.token) {
         return { success: false, error: 'Користувач не авторизований' };
       }
 
-      const response = await api.put('/auth/me', userData, { // Виправлено з /auth/profile на /auth/me
+      // Змінено на PUT запит для оновлення профілю
+      const response = await api.put('/auth/profile', userData, {
         includeAuth: true,
       });
 

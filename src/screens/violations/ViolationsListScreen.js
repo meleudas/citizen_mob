@@ -15,17 +15,14 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
-// Custom hooks
 import { useViolations } from '../../hooks/useViolations';
 import { useThemeColors } from '../../hooks/useTheme';
 import { useLanguage } from '../../hooks/useLanguage';
 
-// Common components
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-// Custom components
 import ViolationCard from '../../components/violations/ViolationCard';
 import Button from '../../components/common/Button';
 
@@ -43,10 +40,8 @@ const ViolationsListScreen = () => {
   const { colors, isDark } = useThemeColors();
   const { t, formatDate } = useLanguage();
   
-  // Route params for filters
   const routeFilters = route.params?.filters || {};
   
-  // Local state
   const [filters, setFilters] = useState({
     category: routeFilters.category || 'all',
     search: routeFilters.search || '',
@@ -67,7 +62,6 @@ const ViolationsListScreen = () => {
   const [selectedViolations, setSelectedViolations] = useState([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   
-  // Load violations on mount and when filters change
   useEffect(() => {
     loadViolations();
   }, [filters, pagination.page]);
@@ -121,7 +115,6 @@ const ViolationsListScreen = () => {
     setLoadingMore(false);
   };
   
-  // Filter actions
   const onFilterChange = (filterType, value) => {
     setFilters(prev => ({
       ...prev,
@@ -142,7 +135,6 @@ const ViolationsListScreen = () => {
     onFilterChange('sortOrder', sortOrder);
   };
   
-  // Navigation actions
   const onViolationPress = (violation) => {
     if (isSelectionMode) {
       toggleSelection(violation.id);
@@ -151,7 +143,6 @@ const ViolationsListScreen = () => {
     }
   };
   
-  // Selection actions
   const toggleSelection = (id) => {
     setSelectedViolations(prev => 
       prev.includes(id) 
@@ -175,7 +166,6 @@ const ViolationsListScreen = () => {
     }
   };
   
-  // Batch actions
   const onDeleteSelected = () => {
     if (selectedViolations.length === 0) return;
     
@@ -243,16 +233,13 @@ const ViolationsListScreen = () => {
     }
   };
   
-  // Filtered and sorted violations
   const filteredViolations = useMemo(() => {
     let filtered = [...violations];
     
-    // Apply category filter
     if (filters.category !== 'all') {
       filtered = filtered.filter(v => v.category === filters.category);
     }
     
-    // Apply search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(v => 
@@ -261,7 +248,6 @@ const ViolationsListScreen = () => {
       );
     }
     
-    // Apply sorting
     filtered.sort((a, b) => {
       let aValue = a[filters.sortBy];
       let bValue = b[filters.sortBy];
@@ -279,7 +265,6 @@ const ViolationsListScreen = () => {
     return filtered;
   }, [violations, filters]);
   
-  // Category options
   const categories = [
     { key: 'all', label: t('violations.allCategories') || 'Всі категорії', icon: 'filter-list' },
     { key: 'parking', label: t('category.parking') || 'Паркування', icon: 'local-parking' },
@@ -290,14 +275,12 @@ const ViolationsListScreen = () => {
     { key: 'other', label: t('category.other') || 'Інше', icon: 'warning' },
   ];
   
-  // Sort options
   const sortOptions = [
     { key: 'dateTime', label: t('violations.sortBy.date') || 'Дата', icon: 'schedule' },
     { key: 'category', label: t('violations.sortBy.category') || 'Категорія', icon: 'category' },
     { key: 'description', label: t('violations.sortBy.description') || 'Опис', icon: 'description' },
   ];
   
-  // Render header with search and filters
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: colors.card }]}>
       {/* Search Bar */}
@@ -532,7 +515,6 @@ const ViolationsListScreen = () => {
     />
   );
   
-  // Render empty state
   const renderEmptyState = () => (
     <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
       <Icon name="error-outline" size={64} color={colors.textSecondary} />
@@ -574,7 +556,6 @@ const ViolationsListScreen = () => {
     </View>
   );
   
-  // Render footer (loading more indicator)
   const renderFooter = () => {
     if (!loadingMore) return null;
     
@@ -588,7 +569,6 @@ const ViolationsListScreen = () => {
     );
   };
   
-  // Render statistics
   const renderStatistics = () => (
     <View style={[styles.statistics, { backgroundColor: colors.card }]}>
       <Text style={[styles.statisticsText, { color: colors.text }]}>

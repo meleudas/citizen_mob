@@ -1,16 +1,15 @@
 // src/contexts/AuthContext.js
 import React, { createContext, useState, useCallback, useEffect } from 'react';
-import authService from '../services/authService'; // Переконайтесь, що шлях правильний
+import authService from '../services/authService';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isGuest, setIsGuest] = useState(false); // Додано стан для гостя
-  const [isLoading, setIsLoading] = useState(true); // Початкове завантаження
+  const [isGuest, setIsGuest] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
 
-  // Перевірка стану авторизації через AuthService
   const checkAuthStatus = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -18,11 +17,11 @@ export const AuthProvider = ({ children }) => {
       
       if (authResult.isAuthenticated && authResult.user) {
         setIsAuthenticated(true);
-        setIsGuest(false); // Не гість, якщо авторизований
+        setIsGuest(false);
         setUser(authResult.user);
       } else {
         setIsAuthenticated(false);
-        setIsGuest(false); // Скидаємо стан гостя при перевірці
+        setIsGuest(false);
         setUser(null);
       }
     } catch (error) {
@@ -35,7 +34,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Логін через AuthService
   const login = useCallback(async (credentials) => {
     try {
       setIsLoading(true);
@@ -43,7 +41,7 @@ export const AuthProvider = ({ children }) => {
       
       if (result.success && result.user) {
         setIsAuthenticated(true);
-        setIsGuest(false); // Не гість після логіну
+        setIsGuest(false);
         setUser(result.user);
       }
       return result;
@@ -55,7 +53,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Реєстрація через AuthService
   const register = useCallback(async (userData) => {
     try {
       setIsLoading(true);
@@ -63,7 +60,7 @@ export const AuthProvider = ({ children }) => {
       
       if (result.success && result.user) {
         setIsAuthenticated(true);
-        setIsGuest(false); // Не гість після реєстрації
+        setIsGuest(false);
         setUser(result.user);
       }
       return result;
@@ -75,11 +72,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Вхід як гість
   const loginAsGuest = useCallback(() => {
     console.log('👥 [AuthContext] Вхід як гість');
-    setIsAuthenticated(false); // Не авторизований
-    setIsGuest(true); // Але є гість
+    setIsAuthenticated(false);
+    setIsGuest(true);
     setUser({ 
       id: 'guest', 
       firstName: 'Гість', 
@@ -90,13 +86,12 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(false);
   }, []);
 
-  // Логаут через AuthService (вихід також з гостьового режиму)
   const logout = useCallback(async () => {
     try {
       setIsLoading(true);
       await authService.logout();
       setIsAuthenticated(false);
-      setIsGuest(false); // Вихід з гостьового режиму
+      setIsGuest(false);
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
@@ -105,34 +100,37 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Оновлення даних користувача через AuthService
   const updateUser = useCallback(async (userData) => {
     try {
       const result = await authService.updateProfile(userData);
+      
       if (result.success && result.user) {
+        // У вашому сервісі повертається { success: true, user: updatedUser }
         setUser(result.user);
+        // Повертаємо результат з оновленим користувачем
+        return { success: true, user: result.user };
+      } else {
+        return result;
       }
-      return result;
     } catch (error) {
       console.error('Update user error:', error);
       return { success: false, error: error.message };
     }
   }, []);
 
-  // Ініціальна перевірка статусу авторизації при монтуванні
   useEffect(() => {
     checkAuthStatus();
   }, [checkAuthStatus]);
 
   const value = {
     isAuthenticated,
-    isGuest, // Додано в контекст
+    isGuest,
     isLoading,
     user,
     checkAuthStatus,
     login,
     register,
-    loginAsGuest, // Додано функцію
+    loginAsGuest,
     logout,
     updateUser,
   };

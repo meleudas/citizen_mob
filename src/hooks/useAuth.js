@@ -351,23 +351,36 @@ export const useAuth = () => {
     try {
       setLoading(true);
       setError(null);
-
+ф
       // Використовуємо authService для оновлення профілю
       const response = await authService.updateProfile(userData);
       
       if (response.success) {
         console.log('✅ [updateProfile] Профіль оновлено');
 
-        // Збереження оновлених даних
-        await AsyncStorage.setItem(USER_KEY, JSON.stringify(response.user));
-        console.log('💾 [updateProfile] Оновлені дані користувача збережені в AsyncStorage');
+        // Визначаємо, якого користувача використовувати
+        let updatedUser;
+        if (response.data && response.data.user) {
+          updatedUser = response.data.user;
+        } else if (response.user) {
+          updatedUser = response.user;
+        } else {
+          // Якщо користувач не переданий, отримуємо його з поточного стану
+          updatedUser = contextUser;
+        }
 
-        // Оновлення контексту
-        console.log('🔄 [updateProfile] Оновлення контексту через contextUpdateUser');
-        await contextUpdateUser(response.user);
-        console.log('🔄 [updateProfile] Контекст оновлено');
+        if (updatedUser) {
+          // Збереження оновлених даних
+          await AsyncStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+          console.log('💾 [updateProfile] Оновлені дані користувача збережені в AsyncStorage');
 
-        return { success: true, user: response.user };
+          // Оновлення контексту
+          console.log('🔄 [updateProfile] Оновлення контексту через contextUpdateUser');
+          await contextUpdateUser(response); // передаємо весь response, а не тільки користувача
+          console.log('🔄 [updateProfile] Контекст оновлено');
+        }
+
+        return { success: true, user: updatedUser, ...response };
       } else {
         throw new Error(response.error || 'Помилка оновлення профілю');
       }

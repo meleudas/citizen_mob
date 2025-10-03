@@ -10,14 +10,14 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-// Custom hooks
+
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { useLanguage } from '../hooks/useLanguage';
 import { useSync } from '../hooks/useSync';
 import { useNetwork } from '../hooks/useNetwork';
 
-// Common components
+
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const SplashScreen = () => {
@@ -28,54 +28,53 @@ const SplashScreen = () => {
   const { checkSyncStatus, syncStatus } = useSync();
   const { isOnline, connectionType } = useNetwork();
   
-  // Local state
+
   const [loading, setLoading] = useState(true);
   const [initializationProgress, setInitializationProgress] = useState(0);
   const [error, setError] = useState(null);
   
-  // Animation refs
+
   const logoScale = useRef(new Animated.Value(0.8)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const textOpacity = useRef(new Animated.Value(0)).current;
   const progressWidth = useRef(new Animated.Value(0)).current;
-  
-  // Initialize app
+
   useEffect(() => {
     initializeApp();
   }, []);
   
   const initializeApp = async () => {
     try {
-      // Minimum splash screen time (1-2 seconds)
+
       const minimumSplashTime = 1500;
       const startTime = Date.now();
       
-      // Animate logo entrance
+
       animateLogoEntrance();
       
-      // Step 1: Initialize theme and language (20%)
+
       await updateProgress(20, 'Initializing theme and language...');
       await Promise.all([
         initializeTheme(),
         initializeLanguage(),
       ]);
       
-      // Step 2: Check authentication status (40%)
+
       await updateProgress(40, 'Checking authentication...');
       await checkAuthStatus();
       
-      // Step 3: Load settings and preferences (60%)
+
       await updateProgress(60, 'Loading settings...');
       await loadSettings();
       
-      // Step 4: Check network and sync status (80%)
+
       await updateProgress(80, 'Checking network and sync status...');
       await Promise.all([
         checkSyncStatus(),
         checkNetworkStatus(),
       ]);
       
-      // Ensure minimum splash time
+
       const elapsedTime = Date.now() - startTime;
       const remainingTime = Math.max(0, minimumSplashTime - elapsedTime);
       
@@ -83,10 +82,10 @@ const SplashScreen = () => {
         await new Promise(resolve => setTimeout(resolve, remainingTime));
       }
       
-      // Final step: Navigate (100%)
+
       await updateProgress(100, 'Ready...');
       
-      // Navigate to appropriate screen
+
       setTimeout(navigateToAppropriateScreen, 300);
       
     } catch (err) {
@@ -104,7 +103,6 @@ const SplashScreen = () => {
           {
             text: 'Exit',
             onPress: () => {
-              // Exit app (platform specific)
               Alert.alert('Please restart the application');
             },
           },
@@ -116,14 +114,14 @@ const SplashScreen = () => {
   const updateProgress = async (percentage, message) => {
     setInitializationProgress(percentage);
     
-    // Animate progress bar
+
     Animated.timing(progressWidth, {
       toValue: percentage,
       duration: 300,
       useNativeDriver: false,
     }).start();
     
-    // Update loading message
+
     if (message) {
       console.log(`Initialization: ${message}`);
     }
@@ -143,7 +141,7 @@ const SplashScreen = () => {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Animate text entrance after logo
+
       Animated.timing(textOpacity, {
         toValue: 1,
         duration: 800,
@@ -162,12 +160,12 @@ const SplashScreen = () => {
     
     console.log('Loading user settings...');
     
-    // Simulate settings loading
+
     await new Promise(resolve => setTimeout(resolve, 200));
   };
   
   const checkNetworkStatus = async () => {
-    // Check network connectivity and prepare for offline mode
+
     console.log('Checking network status...');
     
     if (!isOnline) {
@@ -189,7 +187,7 @@ const SplashScreen = () => {
     }
   };
   
-  // Format progress percentage for accessibility
+
   const getProgressText = () => {
     return `Application initialization progress: ${initializationProgress}%`;
   };

@@ -30,7 +30,6 @@ const EditProfileScreen = () => {
     firstName: '',
     lastName: '',
     email: '',
-    phone: '',
   });
   
   const [errors, setErrors] = useState({});
@@ -38,13 +37,15 @@ const EditProfileScreen = () => {
 
   // Ініціалізація форми даними користувача
   useEffect(() => {
-    if (user) {
-      setFormData({
+    console.log('📋 [EditProfileScreen] useEffect викликаний', { user, hasUser: !!user });
+    if (user && user.firstName !== undefined) {
+      const newFormData = {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
-        phone: user.phone || '',
-      });
+      };
+      console.log('📋 [EditProfileScreen] Завантажені дані користувача:', newFormData);
+      setFormData(newFormData);
     }
   }, [user]);
 
@@ -68,10 +69,6 @@ const EditProfileScreen = () => {
       newErrors.email = t('profile.emailRequired') || 'Email обов\'язковий';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = t('profile.emailInvalid') || 'Невірний формат email';
-    }
-    
-    if (formData.phone && formData.phone.trim().length < 10) {
-      newErrors.phone = t('profile.phoneMinLength') || 'Телефон має містити мінімум 10 символів';
     }
     
     setErrors(newErrors);
@@ -146,6 +143,19 @@ const EditProfileScreen = () => {
       [{ text: t('common.ok') || 'OK' }]
     );
   };
+
+  // Додамо лог для відлагодження
+  console.log('📊 [EditProfileScreen] Поточний стан:', {
+    user: user ? { 
+      id: user.id, 
+      firstName: user.firstName, 
+      lastName: user.lastName, 
+      email: user.email 
+    } : 'NO USER',
+    formData,
+    loading,
+    isAuthenticated: !!user
+  });
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -224,19 +234,6 @@ const EditProfileScreen = () => {
             style={styles.input}
             editable={!loading}
             accessibilityLabel={t('profile.email') || 'Email'}
-          />
-
-          <Input
-            label={t('profile.phone') || 'Телефон'}
-            value={formData.phone}
-            onChangeText={(value) => handleInputChange('phone', value)}
-            placeholder={t('profile.phonePlaceholder') || 'Введіть ваш номер телефону'}
-            keyboardType="phone-pad"
-            showError={!!errors.phone}
-            errorText={errors.phone}
-            style={styles.input}
-            editable={!loading}
-            accessibilityLabel={t('profile.phone') || 'Телефон'}
           />
 
           <View style={styles.buttonContainer}>

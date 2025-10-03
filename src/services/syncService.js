@@ -2,80 +2,107 @@
 
 import * as Network from 'expo-network';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from './api';
 import violationsService from './violationService';
 import cloudinaryService from './cloudinaryService';
 
 class SyncService {
   constructor() {
     this.isSyncing = false;
-    this.syncQueue = [];
     this.syncStatus = 'idle'; // idle, syncing, completed, failed
     this.syncListeners = [];
     this.conflictListeners = [];
     this.autoSyncEnabled = true;
     this.lastSyncTime = null;
-    this.networkCheckInterval = null;
+    this.syncPromise = null;
+    this.lastAutoSyncTime = 0;
+    this.networkSubscription = null;
   }
 
-  // 1. Перевірка статусу мережі
-  async checkNetworkStatus() {
+  // 🔧 Виправлена перевірка інтернету через пінг
+  async checkInternetReachable() {
     try {
-      const networkState = await Network.getNetworkStateAsync();
-      const connectivityState = await Network.getConnectivityStateAsync();
-      
-      return {
-        success: true,
-        data: {
-          isConnected: networkState.isConnected,
-          isInternetReachable: connectivityState.isInternetReachable,
-          type: networkState.type || 'unknown',
-          details: networkState
-        },
-        message: 'Network status checked successfully'
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message || 'Failed to check network status'
-      };
+      // ✅ Виправлено: видалено зайві пробіли в URL
+      await fetch('https://httpbin.org/get', {
+        method: 'HEAD',
+        timeout: 5000,
+      });
+      return true;
+    } catch {
+      return false;
     }
   }
 
-  // Прослуховування змін мережі
+  // 🌐 Підписка на зміни мережі (без setInterval!)
   subscribeToNetworkChanges(callback) {
-    // Використовуємо інтервал для перевірки змін мережі
-    const interval = setInterval(async () => {
-      try {
-        const networkState = await Network.getNetworkStateAsync();
-        const connectivityState = await Network.getConnectivityStateAsync();
-        
-        const networkInfo = {
-          isConnected: networkState.isConnected,
-          isInternetReachable: connectivityState.isInternetReachable,
-          type: networkState.type || 'unknown'
-        };
-        
-        callback(networkInfo);
-        
-        // Автоматична синхронізація при з'єднанні
-        if (networkState.isConnected && connectivityState.isInternetReachable && this.autoSyncEnabled) {
-          this.autoSync();
-        }
-      } catch (error) {
-        console.error('Network monitoring error:', error);
-      }
-    }, 3000); // Перевірка кожні 3 секунди
+    if (this.networkSubscription) {
+      this.networkSubscription.remove();
+    }
 
-    return () => clearInterval(interval);
+    this.networkSubscription = Network.addNetworkListener(async (state) => {
+      const isConnected = state.isConnected;
+      const isInternetReachable = isConnected ? await this.checkInternetReachable() : false;
+
+      const networkInfo = {
+        isConnected,
+        isInternetReachable,
+        type: state.type || 'unknown',
+      };
+
+      callback?.(networkInfo);
+
+      // 🔁 Автоматична синхронізація лише при переході в онлайн
+      if (isConnected && isInternetReachable && this.autoSyncEnabled) {
+        await this.autoSync();
+      }
+    });
+
+    return () => {
+      if (this.networkSubscription) {
+        this.networkSubscription.remove();
+        this.networkSubscription = null;
+      }
+    };
   }
 
-  // 2. Синхронізація violations з сервером
+  // ⏱️ Автоматична синхронізація з debounce
+  async autoSync() {
+    const now = Date.now();
+    if (now - this.lastAutoSyncTime < 10000) {
+      return; // не частіше ніж раз на 10 сек
+    }
+
+    if (!this.autoSyncEnabled || this.isSyncing) return;
+
+    const isInternetReachable = await this.checkInternetReachable();
+    if (!isInternetReachable) return;
+
+    const offlineViolations = await this.getOfflineViolations();
+    if (offlineViolations.length === 0) return;
+
+    this.lastAutoSyncTime = now;
+    await this.syncViolations();
+  }
+
+  // 🔄 Синхронізація з захистом від паралельних запусків
   async syncViolations() {
+    if (this.syncPromise) {
+      console.log('🔄 Sync already in progress, returning existing promise...');
+      return this.syncPromise;
+    }
+
+    this.syncPromise = this.performSync();
+    try {
+      return await this.syncPromise;
+    } finally {
+      this.syncPromise = null;
+    }
+  }
+
+  async performSync() {
     if (this.isSyncing) {
       return {
         success: false,
-        error: 'Sync already in progress'
+        error: 'Sync already in progress',
       };
     }
 
@@ -84,18 +111,18 @@ class SyncService {
     this.notifySyncListeners('syncing');
 
     try {
-      // Отримуємо офлайн дані
       const offlineViolations = await this.getOfflineViolations();
-      
+
       if (offlineViolations.length === 0) {
         this.updateSyncStatus('completed');
         this.isSyncing = false;
+        this.lastSyncTime = new Date().toISOString();
         this.notifySyncListeners('completed');
-        
+
         return {
           success: true,
           data: { synced: 0, conflicts: 0 },
-          message: 'No offline violations to sync'
+          message: 'No offline violations to sync',
         };
       }
 
@@ -103,14 +130,12 @@ class SyncService {
       let conflictCount = 0;
       const failedSyncs = [];
 
-      // Синхронізуємо кожне правопорушення
       for (const violation of offlineViolations) {
         try {
           const result = await this.syncSingleViolation(violation);
-          
+
           if (result.success) {
             syncedCount++;
-            // Видаляємо з офлайн сховища після успішної синхронізації
             await this.removeOfflineViolation(violation.localId);
           } else if (result.conflict) {
             conflictCount++;
@@ -126,7 +151,11 @@ class SyncService {
       this.updateSyncStatus('completed');
       this.isSyncing = false;
       this.lastSyncTime = new Date().toISOString();
-      this.notifySyncListeners('completed', { syncedCount, conflictCount, failedSyncs });
+      this.notifySyncListeners('completed', {
+        syncedCount,
+        conflictCount,
+        failedSyncs,
+      });
 
       return {
         success: true,
@@ -134,62 +163,45 @@ class SyncService {
           synced: syncedCount,
           conflicts: conflictCount,
           failed: failedSyncs.length,
-          total: offlineViolations.length
+          total: offlineViolations.length,
         },
-        message: `Sync completed: ${syncedCount} synced, ${conflictCount} conflicts, ${failedSyncs.length} failed`
+        message: `Sync completed: ${syncedCount} synced, ${conflictCount} conflicts, ${failedSyncs.length} failed`,
       };
-
     } catch (error) {
       this.updateSyncStatus('failed');
       this.isSyncing = false;
       this.notifySyncListeners('failed', { error: error.message });
-      
+
       return {
         success: false,
-        error: error.message || 'Failed to sync violations'
+        error: error.message || 'Failed to sync violations',
       };
     }
   }
 
-  // Синхронізація одного правопорушення
   async syncSingleViolation(violation) {
     try {
-      // Спочатку завантажуємо фото на Cloudinary, якщо вони є
-      const photoUrls = [];
-      if (violation.data.photoKeys && violation.data.photoKeys.length > 0) {
-        for (const photoKey of violation.data.photoKeys) {
-          try {
-            // Отримуємо фото з AsyncStorage
-            const photoData = await AsyncStorage.getItem(photoKey);
-            if (photoData) {
-              const photoObject = JSON.parse(photoData);
-              
-              // Завантажуємо фото на Cloudinary
-              const uploadResult = await cloudinaryService.uploadPhoto(photoObject);
-              if (uploadResult.success) {
-                photoUrls.push(uploadResult.secureUrl);
-                // Опційно: видаляємо фото з AsyncStorage після успішного завантаження
-                await AsyncStorage.removeItem(photoKey);
-              }
-            }
-          } catch (photoError) {
-            console.error('Failed to upload photo:', photoError);
+      let photoUrl = null;
+      
+      if (violation.data?.photo) {
+        try {
+          const uploadResult = await cloudinaryService.uploadPhoto(violation.data.photo);
+          if (uploadResult.success) {
+            photoUrl = uploadResult.secureUrl;
           }
+        } catch (photoError) {
+          console.error('Failed to upload photo:', photoError);
         }
       }
 
-      // Підготовка даних для сервера
       const serverData = {
         ...violation.data,
-        photoUrls: photoUrls.length > 0 ? photoUrls : undefined,
+        ...(photoUrl && { photoUrl }),
       };
       
-      // Видаляємо посилання на локальні фото
-      delete serverData.photoKeys;
+      delete serverData.photo;
 
-      // Перевіряємо, чи це нове правопорушення або оновлення
       if (violation.isNew) {
-        // Створення нового правопорушення
         const result = await violationsService.createViolation(serverData);
         
         if (result.success) {
@@ -198,8 +210,7 @@ class SyncService {
             serverData: result.data
           };
         } else {
-          // Перевіряємо на конфлікт
-          if (result.status === 409) { // Conflict
+          if (result.status === 409) {
             return {
               success: false,
               conflict: true,
@@ -209,7 +220,6 @@ class SyncService {
           throw new Error(result.error);
         }
       } else {
-        // Оновлення існуючого правопорушення
         const result = await violationsService.updateViolation(violation.id, serverData);
         
         if (result.success) {
@@ -218,7 +228,7 @@ class SyncService {
             serverData: result.data
           };
         } else {
-          if (result.status === 409) { // Conflict
+          if (result.status === 409) {
             return {
               success: false,
               conflict: true,
@@ -236,10 +246,8 @@ class SyncService {
     }
   }
 
-  // 3. Обробка помилок синхронізації
   handleSyncError(error, violation) {
     console.warn('Sync error for violation:', violation.localId, error);
-    
     return {
       success: false,
       error: error.message,
@@ -249,12 +257,11 @@ class SyncService {
   }
 
   isRetryableError(error) {
-    // Помилки мережі та сервера 5xx - повторювані
     const retryableStatuses = [500, 502, 503, 504];
     return error.status && retryableStatuses.includes(error.status);
   }
 
-  // 4. Черга для офлайн даних
+  // 📥 Черга для офлайн даних
   async addToSyncQueue(violation) {
     try {
       const queue = await this.getSyncQueue();
@@ -316,37 +323,7 @@ class SyncService {
     }
   }
 
-  // 5. Автоматична синхронізація при з'єднанні
-  async autoSync() {
-    if (!this.autoSyncEnabled) return;
-
-    const networkStatus = await this.checkNetworkStatus();
-    if (!networkStatus.success || !networkStatus.data.isConnected) {
-      return;
-    }
-
-    // Перевіряємо, чи є що синхронізувати
-    const offlineViolations = await this.getOfflineViolations();
-    if (offlineViolations.length > 0) {
-      await this.syncViolations();
-    }
-  }
-
-  // 6. Статус синхронізації
-  getSyncStatus() {
-    return {
-      status: this.syncStatus,
-      isSyncing: this.isSyncing,
-      lastSyncTime: this.lastSyncTime,
-      queueLength: this.syncQueue.length
-    };
-  }
-
-  updateSyncStatus(status) {
-    this.syncStatus = status;
-  }
-
-  // Робота з офлайн правопорушеннями
+  // 💾 Робота з офлайн правопорушеннями
   async saveOfflineViolation(violation) {
     try {
       const violations = await this.getOfflineViolations();
@@ -409,7 +386,7 @@ class SyncService {
     }
   }
 
-  // 7. Обробка конфліктів даних
+  // ⚖️ Обробка конфліктів
   async resolveConflict(localViolation, serverViolation, resolution = 'server') {
     try {
       let resolvedViolation;
@@ -419,7 +396,6 @@ class SyncService {
           resolvedViolation = serverViolation;
           break;
         case 'local':
-          // Оновлюємо серверну версію локальними даними
           const updateResult = await violationsService.updateViolation(
             serverViolation.id,
             localViolation.data
@@ -431,7 +407,6 @@ class SyncService {
           }
           break;
         case 'merge':
-          // Об'єднуємо дані (реалізація залежить від структури даних)
           const mergedData = this.mergeViolationData(localViolation.data, serverViolation);
           const mergeResult = await violationsService.updateViolation(
             serverViolation.id,
@@ -447,7 +422,6 @@ class SyncService {
           throw new Error('Invalid conflict resolution strategy');
       }
 
-      // Видаляємо з офлайн сховища
       await this.removeOfflineViolation(localViolation.localId);
       
       return {
@@ -464,7 +438,6 @@ class SyncService {
   }
 
   mergeViolationData(localData, serverData) {
-    // Проста реалізація об'єднання - можна розширити
     return {
       ...serverData,
       ...localData,
@@ -472,12 +445,37 @@ class SyncService {
     };
   }
 
-  // Допоміжні методи
-  generateLocalId() {
-    return `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // 📊 Статус і налаштування
+  getSyncStatus() {
+    return {
+      status: this.syncStatus,
+      isSyncing: this.isSyncing,
+      lastSyncTime: this.lastSyncTime,
+    };
   }
 
-  // Слухачі подій
+  updateSyncStatus(status) {
+    this.syncStatus = status;
+  }
+
+  setAutoSync(enabled) {
+    this.autoSyncEnabled = enabled;
+  }
+
+  async getSyncStats() {
+    const offlineViolations = await this.getOfflineViolations();
+    const queue = await this.getSyncQueue();
+    
+    return {
+      offlineViolations: offlineViolations.length,
+      queueLength: queue.length,
+      lastSyncTime: this.lastSyncTime,
+      isSyncing: this.isSyncing,
+      status: this.syncStatus
+    };
+  }
+
+  // 📡 Слухачі
   addSyncListener(callback) {
     this.syncListeners.push(callback);
     return () => {
@@ -520,34 +518,18 @@ class SyncService {
     });
   }
 
-  // Налаштування
-  setAutoSync(enabled) {
-    this.autoSyncEnabled = enabled;
-  }
-
-  // Отримання статистики синхронізації
-  async getSyncStats() {
-    const offlineViolations = await this.getOfflineViolations();
-    const queue = await this.getSyncQueue();
-    
-    return {
-      offlineViolations: offlineViolations.length,
-      queueLength: queue.length,
-      lastSyncTime: this.lastSyncTime,
-      isSyncing: this.isSyncing,
-      status: this.syncStatus
-    };
+  generateLocalId() {
+    return `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 }
 
-// Експортуємо екземпляр сервісу
 const syncService = new SyncService();
 
 export default syncService;
 
-// Експортуємо окремі функції для зручності
+// Експорт усіх методів (як у тебе було)
 export const {
-  checkNetworkStatus,
+  checkInternetReachable,
   subscribeToNetworkChanges,
   syncViolations,
   addToSyncQueue,
