@@ -74,7 +74,7 @@ const ViolationForm = React.forwardRef(({
   const [isPhotoLoading, setIsPhotoLoading] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [cameraPermission, setCameraPermission] = useState(null);
-  const [isOnline, setIsOnline] = useState(network.isOnline() && network.isInternetReachable);
+  const [isOnline, setIsOnline] = useState(network.isOnline() && network.isServerReachable);
   
   // Категорії правопорушеннь
   const categories = [
@@ -104,7 +104,7 @@ const ViolationForm = React.forwardRef(({
   // Відстеження статусу мережі
   useEffect(() => {
     const updateNetworkStatus = () => {
-      const onlineStatus = network.isOnline() && network.isInternetReachable;
+      const onlineStatus = network.isOnline() && network.isServerReachable;
       setIsOnline(onlineStatus);
     };
     

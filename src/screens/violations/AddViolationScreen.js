@@ -35,14 +35,14 @@ const AddViolationScreen = ({ navigation }) => {
   const [formError, setFormError] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
-  const [isOnline, setIsOnline] = useState(network.isOnline() && network.isInternetReachable);
+  const [isOnline, setIsOnline] = useState(network.isOnline() && network.isServerReachable);
   const [syncInProgress, setSyncInProgress] = useState(false);
   
   const formRef = useRef();
 
   useEffect(() => {
     const updateNetworkStatus = () => {
-      const onlineStatus = network.isOnline() && network.isInternetReachable;
+      const onlineStatus = network.isOnline() && network.isServerReachable;
       setIsOnline(onlineStatus);
 
       if (onlineStatus && pendingCount > 0 && !isSyncing && !syncInProgress) {

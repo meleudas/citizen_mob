@@ -14,7 +14,7 @@ export const syncDataAsync = createAsyncThunk(
       const networkState = await Network.getNetworkStateAsync();
       const connectivityState = await Network.getConnectivityStateAsync();
       
-      if (!networkState.isConnected || !connectivityState.isInternetReachable) {
+      if (!networkState.isConnected || !connectivityState.isServerReachable) {
         throw new Error('No internet connection');
       }
       
@@ -50,7 +50,7 @@ const initialState = {
   errors: [],
   network: {
     isConnected: true,
-    isInternetReachable: true,
+    isServerReachable: true,
     type: 'unknown',
   },
   loading: false,

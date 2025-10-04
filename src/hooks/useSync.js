@@ -37,14 +37,14 @@ export const useSync = () => {
   const syncPromiseRef = useRef(null);
   const hasPendingRef = useRef(false);
   
-  const { isOnline, isInternetReachable } = useNetwork();
+  const { isOnline, isServerReachable } = useNetwork();
 
   // 🔁 Інтервал автосинхронізації
   useEffect(() => {
     log('🔄 Setting up auto-sync interval. Conditions:', {
       autoSync: syncSettings.autoSync,
       isOnline,
-      isInternetReachable,
+      isServerReachable,
     });
 
     if (syncIntervalRef.current) {
@@ -52,7 +52,7 @@ export const useSync = () => {
       syncIntervalRef.current = null;
     }
 
-    if (syncSettings.autoSync && isOnline && isInternetReachable) {
+    if (syncSettings.autoSync && isOnline && isServerReachable) {
       syncIntervalRef.current = setInterval(() => {
         if (offlineViolations.length > 0 && !isSyncing) {
           log('⏰ Interval triggered syncData()');
@@ -68,7 +68,7 @@ export const useSync = () => {
         log('⏹️ Cleaned up sync interval');
       }
     };
-  }, [syncSettings.autoSync, syncSettings.syncInterval, isOnline, isInternetReachable]);
+  }, [syncSettings.autoSync, syncSettings.syncInterval, isOnline, isServerReachable]);
 
   // 📥 Реакція на зміну offlineViolations
   useEffect(() => {
@@ -80,7 +80,7 @@ export const useSync = () => {
       !isSyncing &&
       syncSettings.autoSync &&
       isOnline &&
-      isInternetReachable
+      isServerReachable
     ) {
       if (!hasPendingRef.current) {
         hasPendingRef.current = true;
@@ -119,7 +119,7 @@ export const useSync = () => {
       return syncPromiseRef.current;
     }
 
-    if (!isOnline || !isInternetReachable) {
+    if (!isOnline || !isServerReachable) {
       log('🚫 Sync skipped: no internet');
       return { success: false, message: 'No internet connection' };
     }
@@ -169,18 +169,18 @@ export const useSync = () => {
     })();
 
     return syncPromiseRef.current;
-  }, [isOnline, isInternetReachable, syncSettings.syncInterval]);
+  }, [isOnline, isServerReachable, syncSettings.syncInterval]);
 
   // ✋ Ручна синхронізація
   const manualSync = useCallback(async () => {
     log('✋ manualSync() called');
-    if (!isOnline || !isInternetReachable) {
+    if (!isOnline || !isServerReachable) {
       log('🚫 Manual sync blocked: no internet');
       return { success: false, message: 'No internet connection' };
     }
     hasPendingRef.current = false;
     return await syncData();
-  }, [syncData, isOnline, isInternetReachable]);
+  }, [syncData, isOnline, isServerReachable]);
 
   // 💾 Збереження офлайн правопорушення
   const saveOfflineViolation = useCallback(async (violationData) => {

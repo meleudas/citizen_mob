@@ -1,9 +1,24 @@
-// src/services/syncService.js
-
 import * as Network from 'expo-network';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import violationsService from './violationService';
 import cloudinaryService from './cloudinaryService';
+
+// --- Додано: глобальна функція для отримання стану мережі ---
+let networkStateProvider = null;
+
+export const setNetworkStateProvider = (provider) => {
+  networkStateProvider = provider;
+};
+
+const getNetworkState = () => {
+  if (!networkStateProvider) {
+    console.warn('Network state provider not set. Returning default offline state.');
+    // Повертаємо значення, які відповідають isOnline() = false
+    return { isConnected: false, isServerReachable: false, isServerReachable: false, isOnline: false };
+  }
+  return networkStateProvider();
+};
+// --- Кінець додавання ---
 
 class SyncService {
   constructor() {
@@ -18,18 +33,11 @@ class SyncService {
     this.networkSubscription = null;
   }
 
-  // 🔧 Виправлена перевірка інтернету через пінг
+  // 🔧 Видалено fetch-перевірку, використовуємо стан з useNetwork
+  // Тепер це просто обгортка для isOnline
   async checkInternetReachable() {
-    try {
-      // ✅ Виправлено: видалено зайві пробіли в URL
-      await fetch('https://httpbin.org/get', {
-        method: 'HEAD',
-        timeout: 5000,
-      });
-      return true;
-    } catch {
-      return false;
-    }
+    const state = getNetworkState();
+    return state.isOnline; // isOnline тепер враховує сервер
   }
 
   // 🌐 Підписка на зміни мережі (без setInterval!)
@@ -39,19 +47,22 @@ class SyncService {
     }
 
     this.networkSubscription = Network.addNetworkListener(async (state) => {
-      const isConnected = state.isConnected;
-      const isInternetReachable = isConnected ? await this.checkInternetReachable() : false;
-
+      // Оновлюємо стан через провайдер (це має бути реалізовано в UI)
+      // Ми викликаємо callback, щоб інформувати UI
+      const networkState = getNetworkState(); // Отримуємо стан через провайдер
       const networkInfo = {
-        isConnected,
-        isInternetReachable,
+        isConnected: state.isConnected,
+        isInternetReachable: networkState.isInternetReachable,
+        isServerReachable: networkState.isServerReachable,
+        isOnline: networkState.isOnline, // Додано: новий стан
         type: state.type || 'unknown',
       };
 
       callback?.(networkInfo);
 
-      // 🔁 Автоматична синхронізація лише при переході в онлайн
-      if (isConnected && isInternetReachable && this.autoSyncEnabled) {
+      // 🔁 Автоматична синхронізація лише при переході в онлайн (тепер з сервером)
+      // Змінено: перевіряємо isOnline, який враховує сервер
+      if (networkState.isOnline && this.autoSyncEnabled) {
         await this.autoSync();
       }
     });
@@ -73,8 +84,9 @@ class SyncService {
 
     if (!this.autoSyncEnabled || this.isSyncing) return;
 
-    const isInternetReachable = await this.checkInternetReachable();
-    if (!isInternetReachable) return;
+    // Змінено: використовуємо isOnline через провайдер
+    const networkState = getNetworkState();
+    if (!networkState.isOnline) return; // isOnline тепер враховує сервер
 
     const offlineViolations = await this.getOfflineViolations();
     if (offlineViolations.length === 0) return;

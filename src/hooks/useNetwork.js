@@ -5,12 +5,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const OFFLINE_ACTIONS_KEY = 'offlineActions';
 const NETWORK_STATS_KEY = 'networkStats';
+const SERVER_PING_URL = 'http://192.168.3.22:3000/api/ping';
 
 export const useNetwork = () => {
   // Стани мережі
   const [isConnected, setIsConnected] = useState(true);
   const [connectionType, setConnectionType] = useState('unknown');
   const [isInternetReachable, setIsInternetReachable] = useState(true);
+  const [isServerReachable, setIsServerReachable] = useState(true); // Додано: новий стан
   const [networkQuality, setNetworkQuality] = useState('good');
   const [lastChecked, setLastChecked] = useState(new Date());
   const [networkStats, setNetworkStats] = useState({
@@ -57,17 +59,21 @@ export const useNetwork = () => {
 
         const state = {
           isConnected: networkState.isConnected,
-          isInternetReachable: networkState.isInternetReachable, // ✅ Надійно, без fetch!
+          isInternetReachable: networkState.isInternetReachable,
           type: networkState.type || 'unknown',
           details: networkState,
         };
 
-        handleNetworkChange(state);
+        // Додано: перевіряємо досягнення сервера
+        const serverReachable = await checkServerReachable();
+
+        handleNetworkChange({ ...state, isServerReachable: serverReachable });
       } catch (error) {
         console.error('Network status check error:', error);
         handleNetworkChange({
-          isConnected: true,
-          isInternetReachable: true,
+          isConnected: false,
+          isInternetReachable: false,
+          isServerReachable: false, // Додано: вважаємо сервер недосягненим при помилці
           type: 'unknown',
           details: {},
         });
@@ -77,9 +83,8 @@ export const useNetwork = () => {
     // Ініціалізація
     checkNetworkStatus();
 
-    // Перевірка кожні 3 секунди (без HTTP-запитів!)
     networkCheckInterval.current = setInterval(checkNetworkStatus, 3000);
-    statsInterval.current = setInterval(updateNetworkStats, 60000); // Кожну хвилину
+    statsInterval.current = setInterval(updateNetworkStats, 60000);
 
     return () => {
       if (networkCheckInterval.current) clearInterval(networkCheckInterval.current);
@@ -87,15 +92,39 @@ export const useNetwork = () => {
     };
   }, []);
 
+  const checkServerReachable = useCallback(async () => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(SERVER_PING_URL, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache',
+        }
+      });
+      clearTimeout(timeoutId);
+
+      // Якщо отримали відповідь (навіть 4xx/5xx), сервер доступний
+      return response.ok || response.status < 500;
+    } catch (error) {
+      console.error('Server ping error:', error);
+      return false;
+    }
+  }, []);
+
   const handleNetworkChange = useCallback((state) => {
     const {
       isConnected: newIsConnected,
       isInternetReachable: newIsInternetReachable,
+      isServerReachable: newIsServerReachable, // Додано: отримуємо новий стан
       type: newConnectionType,
     } = state;
 
     setIsConnected(newIsConnected);
     setIsInternetReachable(newIsInternetReachable);
+    setIsServerReachable(newIsServerReachable); // Додано: оновлюємо новий стан
     setConnectionType(newConnectionType);
     setLastChecked(new Date());
 
@@ -113,12 +142,12 @@ export const useNetwork = () => {
       offlineTime: !newIsConnected ? prev.offlineTime + timeElapsed : prev.offlineTime,
     }));
 
-    // Виклик слухачів
     networkListeners.current.forEach((callback) => {
       try {
         callback({
           isConnected: newIsConnected,
           isInternetReachable: newIsInternetReachable,
+          isServerReachable: newIsServerReachable, // Додано: передаємо новий стан
           connectionType: newConnectionType,
           networkQuality: quality,
         });
@@ -127,11 +156,11 @@ export const useNetwork = () => {
       }
     });
 
-    // Повтор офлайн-дій при відновленні зв’язку
-    if (newIsConnected && newIsInternetReachable && offlineActions.current.length > 0) {
+    // Повтор офлайн-дій при відновленні зв’язку з сервером
+    if (newIsConnected && newIsServerReachable && offlineActions.current.length > 0) {
       retryFailedRequests();
     }
-  }, []);
+  }, [determineNetworkQuality, retryFailedRequests]);
 
   const determineNetworkQuality = useCallback((state) => {
     if (!state.isConnected) return 'none';
@@ -148,10 +177,17 @@ export const useNetwork = () => {
     }
   }, [networkStats]);
 
-  // ✅ isOnline — тепер стабільна функція на основі стану
+  // Змінено: isOnline тепер залежить від isServerReachable
   const isOnline = useCallback(() => {
-    return isConnected && isInternetReachable;
-  }, [isConnected, isInternetReachable]);
+    // isConnected && isInternetReachable && isServerReachable
+    return isConnected && isInternetReachable && isServerReachable;
+  }, [isConnected, isInternetReachable, isServerReachable]); // Додано залежність від isServerReachable
+
+  // isOnlineToServer залишається без змін, але вона тепер еквівалентна isOnline
+  // Якщо вам потрібна різниця між "є інтернет" і "є інтернет і сервер досягнений", залиште isOnlineToServer
+  const isOnlineToServer = useCallback(() => {
+    return isConnected && isServerReachable;
+  }, [isConnected, isServerReachable]);
 
   const getConnectionType = useCallback(() => connectionType, [connectionType]);
 
@@ -168,6 +204,7 @@ export const useNetwork = () => {
     networkListeners.current = networkListeners.current.filter((cb) => cb !== callback);
   }, []);
 
+    
   const executeOfflineAction = useCallback(async (action) => {
     try {
       const { type, payload, timestamp } = action;
@@ -179,6 +216,7 @@ export const useNetwork = () => {
         case 'violation_create':
         case 'violation_update':
         case 'violation_delete':
+          // Виправлено: додано ключ 'data'
           return { success: true, data: { id: payload?.id || `synced_${Date.now()}` } };
         default:
           return { success: false, message: 'Unknown action type' };
@@ -190,8 +228,9 @@ export const useNetwork = () => {
   }, []);
 
   const retryFailedRequests = useCallback(async () => {
-    if (!isOnline() || offlineActions.current.length === 0) {
-      return { success: false, message: 'No internet or no pending actions' };
+    // Змінено: перевіряємо isOnlineToServer або isConnected && isServerReachable
+    if (!isOnlineToServer() || offlineActions.current.length === 0) {
+      return { success: false, message: 'No connection to server or no pending actions' };
     }
 
     const actionsToRetry = [...offlineActions.current];
@@ -225,7 +264,7 @@ export const useNetwork = () => {
       successful: successfulActions.length,
       failed: failedActions.length,
     };
-  }, [isOnline, executeOfflineAction]);
+  }, [isOnlineToServer, executeOfflineAction, saveOfflineActions]);
 
   const saveOfflineActions = useCallback(async () => {
     try {
@@ -253,7 +292,7 @@ export const useNetwork = () => {
       console.error('Error queuing offline action:', error);
       return { success: false, error: error.message };
     }
-  }, []);
+  }, [saveOfflineActions]);
 
   const getNetworkStats = useCallback(() => {
     return {
@@ -263,8 +302,9 @@ export const useNetwork = () => {
       networkQuality,
       lastChecked,
       pendingActions: offlineActions.current.length,
+      isServerReachable, // Додано: новий стан до статистики
     };
-  }, [networkStats, isConnected, connectionType, networkQuality, lastChecked]);
+  }, [networkStats, isConnected, connectionType, networkQuality, lastChecked, isServerReachable]);
 
   const clearOfflineActions = useCallback(async () => {
     try {
@@ -281,19 +321,19 @@ export const useNetwork = () => {
     return [...offlineActions.current];
   }, []);
 
-  // ❌ Видалено: checkNetworkQuality, pingInternet — вони використовували fetch
-
   return {
     // Стани
     isConnected,
     connectionType,
     isInternetReachable,
+    isServerReachable, // Додано: новий стан
     networkQuality,
     lastChecked,
     networkStats,
 
     // Основні функції
-    isOnline,
+    isOnline, // Тепер враховує isServerReachable
+    isOnlineToServer, // Залишається для випадків, якщо потрібна різниця
     getConnectionType,
     addNetworkListener,
     removeNetworkListener,
@@ -307,9 +347,10 @@ export const useNetwork = () => {
   };
 };
 
-// --- Хелпери (без змін, але без залежності від ping) ---
+// --- Хелпери ---
 
 export const useNetworkRetry = () => {
+  // Змінено: використовуємо isOnline, яке тепер враховує сервер
   const { isOnline, queueOfflineAction } = useNetwork();
   const [retryQueue, setRetryQueue] = useState([]);
 
@@ -318,11 +359,12 @@ export const useNetworkRetry = () => {
       let attempts = 0;
       while (attempts < maxRetries) {
         try {
+          // Змінено: перевіряємо isOnline (яке тепер враховує сервер)
           if (isOnline()) {
             const result = await action();
-            return { success: true, data: result };
+            return { success: true,  result };
           } else {
-            throw new Error('No internet connection');
+            throw new Error('No connection to server'); // Оновлено повідомлення
           }
         } catch (error) {
           attempts++;
@@ -335,13 +377,14 @@ export const useNetworkRetry = () => {
         }
       }
     },
-    [isOnline, queueOfflineAction]
+    [isOnline, queueOfflineAction] // Змінено: залежність
   );
 
   return { executeWithRetry, retryQueue };
 };
 
 export const useRequestMonitor = () => {
+  // Змінено: використовуємо isOnline, яке тепер враховує сервер
   const { isOnline } = useNetwork();
   const [requests, setRequests] = useState([]);
 
@@ -363,7 +406,8 @@ export const useRequestMonitor = () => {
 };
 
 export const useOfflineSync = () => {
-  const { isOnline, retryFailedRequests, getOfflineActions } = useNetwork();
+  // Змінено: використовуємо isOnline, яке тепер враховує сервер
+  const { isOnline, retryFailedRequests, getOfflineActions } = useNetwork(); // isOnline тепер враховує сервер
   const [syncStatus, setSyncStatus] = useState({
     isSyncing: false,
     progress: 0,
@@ -372,8 +416,9 @@ export const useOfflineSync = () => {
   });
 
   const syncOfflineData = useCallback(async () => {
+    // Змінено: перевіряємо isOnline (яке тепер враховує сервер)
     if (!isOnline()) {
-      return { success: false, message: 'No internet connection' };
+      return { success: false, message: 'No connection to server' }; // Оновлено повідомлення
     }
 
     const actions = getOfflineActions();
@@ -391,7 +436,7 @@ export const useOfflineSync = () => {
       setSyncStatus((prev) => ({ ...prev, isSyncing: false }));
       return { success: false, error: error.message };
     }
-  }, [isOnline, retryFailedRequests, getOfflineActions]);
+  }, [isOnline, retryFailedRequests, getOfflineActions]); // Змінено: залежність
 
   const cancelSync = useCallback(() => {
     setSyncStatus({ isSyncing: false, progress: 0, total: 0, completed: 0 });

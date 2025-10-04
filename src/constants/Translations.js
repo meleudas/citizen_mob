@@ -227,6 +227,7 @@ export const translations = {
     'violations.category.placeholder': 'Оберіть категорію',
     // Переклади для заголовка форми (компонент ViolationForm)
     'violations.form.addTitle': 'Додати правопорушення',
+    'violation.description': 'Опис',
     // Переклади для статусу мережі (компонент ViolationForm)
     'common.online': 'Онлайн',
     'common.offline': 'Офлайн',
@@ -237,6 +238,9 @@ export const translations = {
     // Додатковий заголовок для успішного додавання (може використовуватися, але звучить як 'Успіх', тому можна використовувати існуючий 'common.success')
     // 'violations.addSuccessTitle': 'Успіх', // Закоментовано, бо краще використовувати 'common.success'
 
+    'calendar.selectedDate': 'Обрана дата',
+    'calendar.violations': 'Правопорушення',
+    'calendar.viewViolations': 'Переглянути правопорушення',
     // Категорії
     'category.parking': 'Паркування',
     'category.trash': 'Сміття',
@@ -498,6 +502,7 @@ export const translations = {
     'violations.sortBy.date': 'Date',
     'violations.sortBy.category': 'Category',
     'violations.sortBy.description': 'Description',
+    'violation.description': 'Description',
     'violations.deleteSelected': 'Delete Violations',
     'violations.deleteSelectedConfirm': 'Are you sure you want to delete',
     'violations.items': 'items',
@@ -602,6 +607,10 @@ export const translations = {
     // Additional title for successful add (can be used, but sounds like 'Success', so 'common.success' can be used)
     // 'violations.addSuccessTitle': 'Success', // Commented out, as it's better to use 'common.success'
     // Categories
+    'calendar.selectedDate': 'Selected Date',
+    'calendar.violations': 'Violations',
+    'calendar.viewViolations': 'View Violations',
+
     'category.parking': 'Parking',
     'category.trash': 'Trash',
     'category.noise': 'Noise',
@@ -912,6 +921,7 @@ export const translations = {
     'violations.offlineSaveMessage': 'Wykroczenie zostało zapisane. Zostanie zsynchronizowane, gdy będzie dostęp do internetu.',
     'violations.offlineSaveError': 'Błąd zapisu w trybie offline',
     'violations.addSuccessMessage': 'Wykroczenie zostało pomyślnie dodane',
+    'violation.description': 'Opis',
     // Dodatkowe tłumaczenia dla modalnego okna anulowania
     'violations.form.cancelTitle': 'Anulować formularz?',
     'violations.form.cancelMessage': 'Wszystkie zmiany zostaną utracone. Czy na pewno chcesz anulować?',
@@ -1010,6 +1020,9 @@ export const translations = {
     'map.title': 'Mapa',
     'map.search': 'Wyszukaj lokalizację',
     // Календар
+    'calendar.selectedDate': 'Wybrana data',
+    'calendar.violations': 'Wykroczenia',
+    'calendar.viewViolations': 'Zobacz wykroczenia',
     'calendar.title': 'Kalendarz',
     'calendar.noEvents': 'Brak wydarzeń',
     // Додати порушення
