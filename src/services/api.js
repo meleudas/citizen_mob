@@ -2,9 +2,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Базова URL для API
-const BASE_URL = __DEV__ 
-  ? 'http://192.168.3.22:3000/api' 
-  : 'https://server.citizen-mob.com/api';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL
+  || (__DEV__ ? 'http://192.168.3.22:3000/api' : 'https://server.citizen-mob.com/api');
 
 
 const TIMEOUT = 10000; 
