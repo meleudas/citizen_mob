@@ -16,16 +16,6 @@ Built with React Native, Expo, and Redux Toolkit.
 
 React Native · Expo 54 · Redux Toolkit · React Navigation · Cloudinary · SQLite
 
-## Screenshots
-
-| Home | Map | Add violation |
-|------|-----|---------------|
-| ![Home](docs/screenshots/home.png) | ![Map](docs/screenshots/map.png) | ![Add](docs/screenshots/add.png) |
-
-| Calendar | Profile |
-|----------|---------|
-| ![Calendar](docs/screenshots/calendar.png) | ![Profile](docs/screenshots/profile.png) |
-
 ## Getting Started
 
 1. Clone the repository
