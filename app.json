@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "citizen_mob2",
-    "slug": "citizen_mob2",
+    "name": "citizen_mob",
+    "slug": "citizen_mob",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
