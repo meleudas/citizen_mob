@@ -2,13 +2,10 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Налаштування Cloudinary
+// Налаштування Cloudinary (unsigned upload — без секретів на клієнті)
 const CLOUDINARY_CONFIG = {
-  cloudName: 'daaxbffvb',
-  apiKey: '647888569862437',
-  apiSecret: 'aXJICixlaqZ7IMt8fmL3AOonqzE',
-  uploadPreset: 'violation-uploads',
-  baseUrl: 'cloudinary://647888569862437:aXJICixlaqZ7IMt8fmL3AOonqzE@daaxbffvb',
+  cloudName: process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME || '',
+  uploadPreset: process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'violation-uploads',
 };
 
 // Типи трансформацій
@@ -448,31 +445,13 @@ class CloudinaryService {
         throw new Error('Public ID is required');
       }
 
-      // Видалення з Cloudinary API
-      const deleteUrl = `https://api.cloudinary.com/v1_1/${this.config.cloudName}/image/destroy`;
-      
-      const formData = new FormData();
-      formData.append('public_id', publicId);
-      formData.append('api_key', this.config.apiKey);
-
-      const response = await fetch(deleteUrl, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-
-      const responseData = await response.json();
-
-      if (response.ok && responseData.result === 'ok') {
-        // Видалення з історії завантажень
-        await this.removeUploadFromHistory(publicId);
-        
-        return { success: true };
-      } else {
-        throw new Error(responseData.error?.message || 'Delete failed');
+      // Видалення потребує серверної автентифікації (без apiSecret на клієнті)
+      if (!this.config.cloudName) {
+        throw new Error('Cloudinary cloud name is not configured');
       }
+
+      console.warn('Client-side Cloudinary delete is not supported; use backend API');
+      return { success: false, error: 'Delete requires server-side authentication' };
     } catch (error) {
       console.error('Cloudinary delete error:', error);
       return { success: false, error: error.message };
@@ -684,7 +663,7 @@ class CloudinaryService {
   getConfigInfo() {
     return {
       cloudName: this.config.cloudName,
-      baseUrl: this.config.baseUrl,
+      uploadPreset: this.config.uploadPreset,
       transformations: Object.keys(this.transformations),
       maxRetries: this.maxRetries,
       retryDelay: this.retryDelay,
@@ -789,10 +768,7 @@ export { CloudinaryService };
 /**
  * @typedef {Object} CloudinaryConfig
  * @property {string} cloudName - Назва cloud
- * @property {string} apiKey - API ключ
- * @property {string} apiSecret - API секрет
- * @property {string} uploadPreset - Preset для завантаження
- * @property {string} baseUrl - Базова URL
+ * @property {string} uploadPreset - Preset для unsigned завантаження
  */
 
 /**
